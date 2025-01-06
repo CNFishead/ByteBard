@@ -1,14 +1,20 @@
 using Discord.Interactions;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
 {
+    private const string RandomOrgBaseUrl = "https://api.random.org/json-rpc/4/invoke";
+
+
     [SlashCommand("roll", "Roll dice from a user-supplied expression (e.g., 2d20+2 \"attack\")")]
     public async Task RollDice(
-        [Summary("message", "Dice expressions, e.g. 2d20+2 \"attack\"; 4d4+2 \"damage\"")] 
+        [Summary("message", "Dice expressions, e.g. 2d20+2 \"attack\"; 4d4+2 \"damage\"")]
         string message)
     {
+        Console.WriteLine("RollDice fired.");
         // Split multiple expressions by semicolon
         var expressions = message.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
@@ -18,11 +24,14 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
 
         foreach (var rawExpr in expressions)
         {
+            Console.WriteLine($"Processing expression: {rawExpr}");
             var expr = rawExpr.Trim();
             var (diceExpr, label) = ParseExpression(expr);
 
             // Roll the expression, capturing the full breakdown
             var (rolls, total, faces, modifier) = RollDiceExpression(diceExpr);
+
+            Console.WriteLine($"Rolls: {string.Join(", ", rolls)}");
 
             // Format the list of individual rolls, e.g. [9, 2]
             var rollsString = $"[{string.Join(", ", rolls)}]";
@@ -33,7 +42,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
             var lineBuilder = new StringBuilder();
             lineBuilder.Append(Context.User.Mention).Append(" ");
             // lineBuilder.Append("`"); 
-            
+
             if (!string.IsNullOrWhiteSpace(label))
             {
                 lineBuilder.Append($"Label: `{label}`");
@@ -83,7 +92,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
         // Format: [X]d[Y](+Z)
         // e.g. "2d20+2" => 2 dice, 20 faces, +2
         // We'll parse it in a naive way: split on 'd', then check for '+'
-
+        Console.WriteLine($"RollDiceExpression: {diceExpr}");
         var parts = diceExpr.Split('d');
         if (parts.Length != 2)
         {
@@ -116,7 +125,9 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
         var rollList = new List<int>();
         for (int i = 0; i < numDice; i++)
         {
-            int rollValue = random.Next(1, faces + 1);
+            Console.WriteLine($"Rolling die {i + 1}");
+            int rollValue = RollDiceUsingApi(1, 1, faces).Result;
+            Console.WriteLine($"Roll: {rollValue}");
             rollList.Add(rollValue);
         }
 
@@ -124,5 +135,84 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
         int total = rollList.Sum() + modifier;
 
         return (rollList, total, faces, modifier);
+    }
+    public async Task<int> RollDiceUsingApi(int num, int min, int max)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            var requestId = Guid.NewGuid().ToString();
+            // Construct the request payload
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                method = "generateIntegers",
+                @params = new
+                {
+                    apiKey = Environment.GetEnvironmentVariable("RANDOM_ORG_API_KEY"),
+                    n = num,
+                    min = min,
+                    max = max,
+                    replacement = true,
+                },
+                id = requestId,
+            };
+
+            // Serialize the payload to JSON
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            // Make the POST request
+            var response = await client.PostAsync(RandomOrgBaseUrl, content);
+
+            // Ensure the response is successful
+            response.EnsureSuccessStatusCode();
+
+            // Parse the response JSON
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<RandomOrgResponse>(responseJson);
+
+            // Return the first number in the result
+            return result.result.random.data[0];
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Failed to fetch from Random.org. Falling back to simulated roll.");
+            // console log the error message from the api
+            Console.WriteLine("Error message: " + e.Message);
+            // Fallback to simulated dice roll
+            return SimulatedDiceRoll(min, max);
+        }
+    }
+
+    private int SimulatedDiceRoll(int min, int max)
+    {
+        var random = new Random();
+        // generate a random number for the amount of times the dice will bounce
+        var times = random.Next(1, 25); // 1 to 25 times
+        int roll = 0;
+
+        // Simulate multiple bounces
+        for (int i = 0; i < times; i++)
+        {
+            roll += random.Next(min, max + 1);
+        }
+
+        return (roll % (max - min + 1)) + min;
+    }
+    
+    // DTO to deserialize the Random.org response
+    private class RandomOrgResponse
+    {
+        public RandomOrgResult result { get; set; }
+
+        public class RandomOrgResult
+        {
+            public RandomData random { get; set; }
+
+            public class RandomData
+            {
+                public int[] data { get; set; }
+            }
+        }
     }
 }
