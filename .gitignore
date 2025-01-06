@@ -1,0 +1,6 @@
+# Ignore launchSettings.json
+Properties/launchSettings.json
+
+# Ignore build outputs
+bin/
+obj/

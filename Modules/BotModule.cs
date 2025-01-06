@@ -1,0 +1,39 @@
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Discord.Interactions;
+
+public class BotModule : IBaseModule
+{
+    public void RegisterServices(IServiceCollection services)
+    {
+        var socketConfig = new DiscordSocketConfig
+        {
+            GatewayIntents = GatewayIntents.Guilds |
+                             GatewayIntents.GuildMessages |
+                             GatewayIntents.MessageContent
+        };
+
+        // Register the DiscordSocketClient with custom config
+        services.AddSingleton(new DiscordSocketClient(socketConfig));
+
+        // Register the CommandService (for text commands)
+        services.AddSingleton<CommandService>();
+
+        // Register the InteractionService (for slash commands) explicitly
+        services.AddSingleton<InteractionService>(sp =>
+        {
+            var client = sp.GetRequiredService<DiscordSocketClient>();
+            // Optional config for slash commands
+            var interactionConfig = new InteractionServiceConfig
+            {
+                // Example settings
+                DefaultRunMode = Discord.Interactions.RunMode.Async
+            };
+            return new InteractionService(client, interactionConfig);
+        });
+
+        // Finally, register your DiscordBotService
+        services.AddSingleton<DiscordBotService>();
+    }
+}
