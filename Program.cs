@@ -1,4 +1,6 @@
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // Add services to the container.
 IBaseModule[] modules = new IBaseModule[]
@@ -16,8 +18,10 @@ foreach (var module in modules)
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+builder.Services.AddSingleton<IDiceRoller, RandomOrgDiceRoller>();
 
 var app = builder.Build();
+app.Logger.LogInformation("Built");
 
 // Access the bot service and start it
 var botService = app.Services.GetRequiredService<DiscordBotService>();
