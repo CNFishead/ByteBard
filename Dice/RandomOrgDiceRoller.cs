@@ -8,9 +8,10 @@ public partial class RandomOrgDiceRoller : IDiceRoller
 
 
     // Constructor taking an ILogger
-    public RandomOrgDiceRoller(ILogger<RandomOrgDiceRoller> logger){
+    public RandomOrgDiceRoller(ILogger<RandomOrgDiceRoller> logger)
+    {
         _logger = logger;
-        
+
     }
 
     /// <summary>
@@ -92,14 +93,19 @@ public partial class RandomOrgDiceRoller : IDiceRoller
             var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
             // Make the POST request
-            var response = await client.PostAsync(RandomOrgBaseUrl, content);
+            var response = await client.PostAsync(RandomOrgBaseUrl, content); 
 
             // Ensure the response is successful
             response.EnsureSuccessStatusCode();
 
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
             // Parse the response JSON
-            var responseJson = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<RandomOrgResponse>(responseJson);
+            var responseJson = await response.Content.ReadAsStringAsync(); 
+            
+            var result = JsonSerializer.Deserialize<RandomOrgResponse>(responseJson, options); 
 
             // Return the first number in the result
             return result.Result.Random.Data[0];
