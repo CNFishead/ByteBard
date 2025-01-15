@@ -20,6 +20,9 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
     public async Task RollDice(
         [Summary("message", "Dice expressions, e.g. 2d20+2 \"attack\"; 4d4+2 \"damage\"")] string message)
     {
+        // incase the command takes too long to respond, defer
+        await DeferAsync();
+
         _logger.LogInformation("RollDice fired.");
         // Split multiple expressions by semicolon
         var expressions = message.Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -60,7 +63,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
             responseBuilder.AppendLine(lineBuilder.ToString());
         }
 
-        await RespondAsync(responseBuilder.ToString());
+        await FollowupAsync(responseBuilder.ToString());
     }
 
     /// <summary>
