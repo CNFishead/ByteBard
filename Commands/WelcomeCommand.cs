@@ -9,6 +9,8 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
     public async Task WelcomeUser(
         [Summary("user", "The user to welcome")] IUser user)
     {
+        // incase the command takes too long to respond, defer
+        await DeferAsync();
         // Static channel/role/user IDs (replace these with your actual IDs)
         const ulong AboutUsChannelId = 1134609148487675914;
         const ulong SettingsChannelId = 1299898223762083891;
@@ -36,6 +38,6 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
         responseBuilder.AppendLine($"If you have any questions, please reach out to a {worldMasterRole.Mention} such as {mephistophales.Mention}, {novaId.Mention}, {seraId.Mention}, or {cnfishId.Mention}.");
 
         // Send the response
-        await RespondAsync(responseBuilder.ToString());
+        await FollowupAsync(responseBuilder.ToString());
     }
 }
