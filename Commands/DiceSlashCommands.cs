@@ -10,11 +10,12 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
     private readonly ILogger _logger;
     private readonly IDiceRoller _diceRoller;
 
-    public DiceRollModule(ILogger<DiceRollModule> logger, IDiceRoller diceRoller){
+    public DiceRollModule(ILogger<DiceRollModule> logger, IDiceRoller diceRoller)
+    {
         _logger = logger;
         _diceRoller = diceRoller;
         _logger.LogInformation("DiceRollModule constructed");
-    }   
+    }
 
     [SlashCommand("roll", "Roll dice from a user-supplied expression (e.g., 2d20+2 \"attack\")")]
     public async Task RollDice(
@@ -33,14 +34,13 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
 
         foreach (var rawExpr in expressions)
         {
-            _logger.LogInformation($"Processing expression: {rawExpr}");
+            // _logger.LogInformation($"Processing expression: {rawExpr}");
             var expr = rawExpr.Trim();
             var (diceExpr, label) = ParseExpression(expr);
-            
+            // _logger.LogInformation($"Parsed: diceExpr={diceExpr}, label={label}");
             // Roll the expression, capturing the full breakdown
             var (rolls, total, faces, modifier) = _diceRoller.Roll(diceExpr);
-
-            _logger.LogInformation($"Rolls: {string.Join(", ", rolls)}");
+            _logger.LogInformation($"Rolls: {string.Join(", ", rolls)}, Total: {total}, Faces: {faces}, Modifier: {modifier}"); 
 
             // Format the list of individual rolls, e.g. [9, 2]
             var rollsString = $"[{string.Join(", ", rolls)}]";
