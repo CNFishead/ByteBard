@@ -2,6 +2,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Discord.Interactions;
+using Microsoft.EntityFrameworkCore;
 
 public class BotModule : IBaseModule
 {
@@ -32,7 +33,7 @@ public class BotModule : IBaseModule
             };
             return new InteractionService(client, interactionConfig);
         });
-
+        services.AddSingleton<IDiceRoller, RandomOrgDiceRoller>();
         // Finally, register your DiscordBotService
         services.AddSingleton<DiscordBotService>();
     }
