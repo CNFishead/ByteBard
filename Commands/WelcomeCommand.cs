@@ -30,6 +30,7 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
             const ulong NovaId = 479121165609074689;
             const ulong SeraId = 455143115439734784;
             const ulong CnfishId = 669683901513334834;
+            const ulong SkyeId = 290651318262169600;
 
             // Fetch guild, channels, roles, and users dynamically
             var guild = Context.Guild;
@@ -49,6 +50,7 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
             var novaId = users.FirstOrDefault(u => u.Id == NovaId);
             var seraId = users.FirstOrDefault(u => u.Id == SeraId);
             var cnfishId = users.FirstOrDefault(u => u.Id == CnfishId);
+            var skyeId = users.FirstOrDefault(u => u.Id == SkyeId);
 
             _logger.LogInformation($"Fetched guild, channels, roles, and users.");
 
@@ -60,7 +62,8 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
             responseBuilder.AppendLine($"If you have any questions, please reach out to a {(worldMasterRole != null ? worldMasterRole.Mention : "@World Master")} such as " +
                 $"{(mephistophales != null ? mephistophales.Mention : "@Mephistophales")}, " +
                 $"{(novaId != null ? novaId.Mention : "@Nova")}, " +
-                $"{(seraId != null ? seraId.Mention : "@Sera")}, or " +
+                $"{(seraId != null ? seraId.Mention : "@Sera")}, " +
+                $"{(skyeId != null ? skyeId.Mention : "@skyeId")}, or " +
                 $"{(cnfishId != null ? cnfishId.Mention : "@Cnfish")}.");
 
             _logger.LogInformation($"Response built.");
