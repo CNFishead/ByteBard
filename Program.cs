@@ -6,6 +6,7 @@ builder.Logging.AddConsole();
 IBaseModule[] modules = new IBaseModule[]
 {
     new BotModule(),
+    new DatabaseModule()
 };
 
 // dynamically register services from modules
@@ -18,7 +19,7 @@ foreach (var module in modules)
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddSingleton<IDiceRoller, RandomOrgDiceRoller>();
+// builder.Services.AddSingleton<IDiceRoller, RandomOrgDiceRoller>();
 
 var app = builder.Build();
 app.Logger.LogInformation("Built");
