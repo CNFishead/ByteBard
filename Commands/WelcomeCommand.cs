@@ -63,7 +63,7 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
                 $"{(mephistophales != null ? mephistophales.Mention : "@Mephistophales")}, " +
                 $"{(novaId != null ? novaId.Mention : "@Nova")}, " +
                 $"{(seraId != null ? seraId.Mention : "@Sera")}, " +
-                $"{(skyeId != null ? skyeId.Mention : "@skyeId")}, or " +
+                $"{(skyeId != null ? skyeId.Mention : "@Skye")}, or " +
                 $"{(cnfishId != null ? cnfishId.Mention : "@Cnfish")}.");
 
             _logger.LogInformation($"Response built.");
