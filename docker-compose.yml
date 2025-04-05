@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  bot:
+    build: .
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - RANDOM_ORG_API_KEY=${RANDOM_ORG_API_KEY}
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=botdb;Username=postgres;Password=postgres
+    depends_on:
+      - db
+    restart: unless-stopped
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: botdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

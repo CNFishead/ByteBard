@@ -24,6 +24,9 @@ builder.Services.AddControllers();
 var app = builder.Build();
 app.Logger.LogInformation("Built");
 
+// ✅ Apply DB migrations
+DbInitializer.ApplyMigrations(app.Services);
+
 // Access the bot service and start it
 var botService = app.Services.GetRequiredService<DiscordBotService>();
 await botService.StartAsync();
