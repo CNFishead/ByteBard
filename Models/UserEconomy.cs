@@ -4,11 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 [Table("UserEconomy")]
 public class UserEconomy
 {
-    [Key] // Since UserId is also the PK, it's marked as Key
-    [ForeignKey(nameof(User))] // Reference to the navigation property
-    public long UserId { get; set; } // Must match UserRecord.Id (long)
+    [Key]
+    public long UserId { get; set; }
 
-    public virtual required UserRecord User { get; set; } // Correct navigation property
+    public virtual UserRecord User { get; set; } = null!;
 
     public int CurrencyAmount { get; set; } = 0;
     public DateTime? LastClaimed { get; set; }
