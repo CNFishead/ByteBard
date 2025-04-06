@@ -21,40 +21,6 @@ public class EconomyModule : InteractionModuleBase<SocketInteractionContext>
 
   
 
-  // [SlashCommand("setdailycurrency", "Set which currency users will receive from the /daily command.")]
-  // public async Task SetDailyCurrency(string currencyName)
-  // {
-  //   var guildId = Context.Guild.Id;
-
-  //   var currency = await _dbContext.CurrencyTypes
-  //       .FirstOrDefaultAsync(c => c.Name.ToLower() == currencyName.ToLower());
-
-  //   if (currency == null)
-  //   {
-  //     await RespondAsync($"❌ Currency `{currencyName}` does not exist.");
-  //     return;
-  //   }
-
-  //   var settings = await _dbContext.ServerSettings
-  //       .FindAsync(guildId);
-
-  //   if (settings == null)
-  //   {
-  //     settings = new ServerSettings
-  //     {
-  //       GuildId = guildId,
-  //       DailyCurrencyId = currency.Id
-  //     };
-  //     _dbContext.ServerSettings.Add(settings);
-  //   }
-  //   else
-  //   {
-  //     settings.DailyCurrencyId = currency.Id;
-  //   }
-
-  //   await _dbContext.SaveChangesAsync();
-  //   await RespondAsync($"✅ `{currencyName}` is now the daily currency for this server.");
-  // }
   // [SlashCommand("balance", "Check your balance for a specific currency.")]
   // public async Task CheckBalance(string currencyName)
   // {
