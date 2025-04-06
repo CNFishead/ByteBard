@@ -64,8 +64,8 @@ namespace FallVerseBotV2.Commands.Economy
 
       balance.Amount += amount;
       await Db.SaveChangesAsync();
+      await RespondAsync($"✅ {user.Mention} now has {balance.Amount:N0} {currencyType.Name}.");
 
-      await RespondAsync($"✅ {username} now has {balance.Amount} {currencyType.Name}.");
     }
   }
 }
