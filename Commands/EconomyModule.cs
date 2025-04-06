@@ -19,24 +19,7 @@ public class EconomyModule : InteractionModuleBase<SocketInteractionContext>
 
   
 
-  // [SlashCommand("addcurrencytype", "Adds a new currency type to the system.")]
-  // public async Task AddCurrencyType(string name)
-  // {
-  //   var lowerName = name.ToLower();
-
-  //   var exists = await _dbContext.CurrencyTypes.AnyAsync(c => c.Name.ToLower() == lowerName);
-  //   if (exists)
-  //   {
-  //     await RespondAsync($"❌ Currency `{name}` already exists.");
-  //     return;
-  //   }
-
-  //   var currency = new CurrencyType { Name = name };
-  //   _dbContext.CurrencyTypes.Add(currency);
-  //   await _dbContext.SaveChangesAsync();
-
-  //   await RespondAsync($"✅ Currency `{name}` has been added.");
-  // }
+  
 
   // [SlashCommand("setdailycurrency", "Set which currency users will receive from the /daily command.")]
   // public async Task SetDailyCurrency(string currencyName)
