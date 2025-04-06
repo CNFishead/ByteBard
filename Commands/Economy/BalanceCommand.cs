@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace FallVerseBotV2.Commands.Economy
 {
@@ -8,8 +9,8 @@ namespace FallVerseBotV2.Commands.Economy
   {
     public BalanceCommand(ILogger<BaseEconomyModule> logger, BotDbContext db) : base(logger, db) { }
 
-    [SlashCommand("balance", "Check your balance for a specific currency.")]
-    public async Task CheckBalance(string currencyName)
+    [SlashCommand("balance", "Check your balance for a specific currency or all.")]
+    public async Task CheckBalance(string? currencyName = null)
     {
       var guildId = Context.Guild.Id;
       var userId = Context.User.Id;
@@ -22,33 +23,64 @@ namespace FallVerseBotV2.Commands.Economy
         return;
       }
 
-      var currency = await Db.CurrencyTypes
-          .FirstOrDefaultAsync(c =>
-              c.GuildId == guildId &&
-              c.Name.ToLower() == currencyName.ToLower());
-
-      if (currency == null)
+      // If a specific currency is requested
+      if (!string.IsNullOrWhiteSpace(currencyName))
       {
-        await RespondAsync($"❌ Currency `{currencyName}` does not exist in this server.");
+        var currency = await Db.CurrencyTypes
+            .FirstOrDefaultAsync(c =>
+                c.GuildId == guildId &&
+                c.Name.ToLower() == currencyName.ToLower());
+
+        if (currency == null)
+        {
+          await RespondAsync($"❌ Currency `{currencyName}` does not exist in this server.");
+          return;
+        }
+
+        var balance = await Db.CurrencyBalances
+            .FirstOrDefaultAsync(b =>
+                b.UserId == userRecord.Id &&
+                b.CurrencyTypeId == currency.Id &&
+                b.GuildId == guildId);
+
+        int amount = balance?.Amount ?? 0;
+        string formatted = amount.ToString("N0", CultureInfo.InvariantCulture);
+
+        var embed = new EmbedBuilder()
+            .WithTitle($"💰 {currency.Name} Balance")
+            .WithDescription($"{username}, you currently have **{formatted} {currency.Name}**.")
+            .WithColor(Color.Teal)
+            .WithTimestamp(DateTime.UtcNow)
+            .Build();
+
+        await RespondAsync(embed: embed);
         return;
       }
 
-      var balance = await Db.CurrencyBalances
-          .FirstOrDefaultAsync(b =>
-              b.UserId == userRecord.Id &&
-              b.CurrencyTypeId == currency.Id &&
-              b.GuildId == guildId);
+      // Otherwise: show all balances for this user in this server
+      var balances = await Db.CurrencyBalances
+          .Include(b => b.CurrencyType)
+          .Where(b => b.UserId == userRecord.Id && b.GuildId == guildId)
+          .ToListAsync();
 
-      int amount = balance?.Amount ?? 0;
+      if (!balances.Any())
+      {
+        await RespondAsync("ℹ️ You have no currency balances in this server.");
+        return;
+      }
 
-      var embed = new EmbedBuilder()
-          .WithTitle($"💰 {currency.Name} Balance")
-          .WithDescription($"{username}, you currently have **{amount} {currency.Name}**.")
+      var embedAll = new EmbedBuilder()
+          .WithTitle("💼 Your Balances")
           .WithColor(Color.Teal)
-          .WithTimestamp(DateTime.UtcNow)
-          .Build();
+          .WithTimestamp(DateTime.UtcNow);
 
-      await RespondAsync(embed: embed);
+      foreach (var b in balances)
+      {
+        string formatted = b.Amount.ToString("N0", CultureInfo.InvariantCulture);
+        embedAll.AddField(b.CurrencyType.Name, formatted, inline: true);
+      }
+
+      await RespondAsync(embed: embedAll.Build());
     }
   }
 }
