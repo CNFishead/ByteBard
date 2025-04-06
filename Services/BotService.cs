@@ -37,7 +37,7 @@ public class DiscordBotService
 
     // Connect the Discord client
     var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
-    await _client.LoginAsync(TokenType.Bot, token); 
+    await _client.LoginAsync(TokenType.Bot, token);
     await _client.StartAsync();
   }
 
@@ -46,7 +46,8 @@ public class DiscordBotService
     Console.WriteLine("HandleCommandAsync fired.");
 
     // Don’t process system or bot messages
-    if (!(msg is SocketUserMessage message)) { Console.WriteLine("System/bot message"); return; };
+    if (!(msg is SocketUserMessage message)) { Console.WriteLine("System/bot message"); return; }
+    ;
     if (message.Author.IsBot) return;
 
     Console.WriteLine($"Message content: {message.Content}");
@@ -76,11 +77,12 @@ public class DiscordBotService
   private async Task OnReadyAsync()
   {
     // Option A: Register commands to a single guild for *faster updates* (guild commands update instantly)
-    // ulong guildId = 669684447704121374; // Replace with your test guild ID
-    // await _interactionService.RegisterCommandsToGuildAsync(guildId);
+    ulong guildId = 669684447704121374; // Replace with your test guild ID
+    await _interactionService.RegisterCommandsToGuildAsync(guildId, true);
+
 
     // Option B (comment out if using Option A): Register globally (takes up to an hour to update)
-    await _interactionService.RegisterCommandsGloballyAsync();
+    // await _interactionService.RegisterCommandsGloballyAsync();
   }
   private async Task HandleInteraction(SocketInteraction arg)
   {

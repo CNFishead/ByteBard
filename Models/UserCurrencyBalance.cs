@@ -13,6 +13,8 @@ public class UserCurrencyBalance
   [ForeignKey(nameof(CurrencyType))]
   public int CurrencyTypeId { get; set; }
 
+  [Required]
+  public ulong GuildId { get; set; }
   public int Amount { get; set; } = 0;
 
   public virtual UserRecord User { get; set; } = null!;

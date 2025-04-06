@@ -9,6 +9,8 @@ public class UserEconomy
 
     public virtual UserRecord User { get; set; } = null!;
 
+    [Required]
+    public ulong GuildId { get; set; }
     public int CurrencyAmount { get; set; } = 0;
     public DateTime? LastClaimed { get; set; }
     public int StreakCount { get; set; } = 0;
