@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FallVerseBotV2.Commands.Economy
 {
-  [Group("economy", "Economy-related commands.")]
   public class DailyCommand : BaseEconomyModule
   {
     public DailyCommand(ILogger<BaseEconomyModule> logger, BotDbContext db) : base(logger, db) { }
@@ -24,7 +23,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (settings == null)
       {
-        await RespondAsync("❌ This server has not set a daily currency yet. Use `/economy setdailycurrency` first.");
+        await RespondAsync("❌ This server has not set a daily currency yet. Use `/setdailycurrency` first.");
         return;
       }
 

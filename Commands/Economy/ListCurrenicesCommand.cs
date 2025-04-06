@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FallVerseBotV2.Commands.Economy
 {
-  [Group("economy", "Economy-related commands.")]
   public class ListCurrenciesCommand : BaseEconomyModule
   {
     public ListCurrenciesCommand(ILogger<ListCurrenciesCommand> logger, BotDbContext db) : base(logger, db)
