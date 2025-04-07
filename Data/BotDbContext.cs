@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 public class BotDbContext : DbContext
 {
@@ -33,5 +34,19 @@ public class BotDbContext : DbContext
         .WithMany()
         .HasForeignKey(s => s.DailyCurrencyId)
         .OnDelete(DeleteBehavior.Restrict);
+
+    // Force all DateTime values to UTC
+    foreach (var entity in modelBuilder.Model.GetEntityTypes())
+    {
+      foreach (var property in entity.GetProperties())
+      {
+        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+        {
+          property.SetValueConverter(new ValueConverter<DateTime, DateTime>(
+              v => v.ToUniversalTime(),
+              v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+        }
+      }
+    }
   }
 }
