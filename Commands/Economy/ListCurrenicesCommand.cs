@@ -13,28 +13,41 @@ namespace FallVerseBotV2.Commands.Economy
     [SlashCommand("listcurrencies", "List all available currency types for this server.")]
     public async Task ListAsync()
     {
-      var guildId = Context.Guild.Id;
-
-      var currencies = await Db.CurrencyTypes
-          .Where(c => c.GuildId == guildId)
-          .ToListAsync();
-
-      if (!currencies.Any())
+      try
       {
-        await RespondAsync("ℹ️ No currencies have been added yet in this server.");
-        return;
+
+        await DeferAsync(true);
+        var guildId = Context.Guild.Id;
+
+        var currencies = await Db.CurrencyTypes
+            .Where(c => c.GuildId == guildId)
+            .ToListAsync();
+
+        if (!currencies.Any())
+        {
+          await FollowupAsync("ℹ️ No currencies have been added yet in this server.");
+          return;
+        }
+
+        var embed = new EmbedBuilder()
+            .WithTitle("💱 Available Currencies")
+            .WithColor(Color.Blue);
+
+        foreach (var currency in currencies)
+        {
+          embed.AddField(currency.Name, "\u200B", true);
+        }
+
+        await FollowupAsync(embed: embed.Build());
       }
-
-      var embed = new EmbedBuilder()
-          .WithTitle("💱 Available Currencies")
-          .WithColor(Color.Blue);
-
-      foreach (var currency in currencies)
+      catch (System.Exception ex)
       {
-        embed.AddField(currency.Name, "\u200B", true);
+        {
+          Logger.LogError(ex, "Error in ListCurrenciesCommand: {Message}", ex.Message);
+          await FollowupAsync("❌ Something went wrong while processing your request.");
+          throw; // Rethrow the exception to be handled by the global exception handler
+        }
       }
-
-      await RespondAsync(embed: embed.Build());
     }
   }
 }

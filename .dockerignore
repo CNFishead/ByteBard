@@ -1,0 +1,6 @@
+# .dockerignore file (same dir as Dockerfile)
+bin/
+obj/
+.env
+.vscode/
+.git/

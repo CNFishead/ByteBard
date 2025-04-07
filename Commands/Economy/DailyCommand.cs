@@ -11,106 +11,126 @@ namespace FallVerseBotV2.Commands.Economy
     [SlashCommand("daily", "Claim your daily reward!")]
     public async Task ExecuteAsync()
     {
-      Logger.LogInformation("DailyCommand fired.");
-      var discordId = Context.User.Id;
-      var username = Context.User.Username;
-      var guildId = Context.Guild.Id;
-
-      // Step 0: Get Daily Currency for This Server
-      var settings = await Db.ServerSettings
-          .Include(s => s.DailyCurrency)
-          .FirstOrDefaultAsync(s => s.GuildId == guildId);
-
-      if (settings == null)
+      try
       {
-        await RespondAsync("❌ This server has not set a daily currency yet. Use `/setdailycurrency` first.");
-        return;
-      }
 
-      var dailyCurrency = settings.DailyCurrency;
+        await DeferAsync();
 
-      // Step 1: Ensure UserRecord Exists
-      var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == discordId);
-      if (userRecord == null)
-      {
-        Logger.LogInformation($"Creating new user record for {username} ({discordId})");
-        userRecord = new UserRecord { DiscordId = discordId, Username = username };
-        Db.Users.Add(userRecord);
-        await Db.SaveChangesAsync();
-      }
+        Logger.LogInformation("DailyCommand fired.");
+        var discordId = Context.User.Id;
+        var username = Context.User.Username;
+        var guildId = Context.Guild.Id;
 
-      // Step 2: Ensure UserEconomy Exists (per guild)
-      var userEconomy = await Db.Economies
-          .FirstOrDefaultAsync(e => e.UserId == userRecord.Id && e.GuildId == guildId);
+        // Step 0: Get Daily Currency for This Server
+        var settings = await Db.ServerSettings
+            .Include(s => s.DailyCurrency)
+            .FirstOrDefaultAsync(s => s.GuildId == guildId);
 
-      if (userEconomy == null)
-      {
-        Logger.LogInformation($"Creating new economy record for {username} ({discordId})");
-        userEconomy = new UserEconomy
+        if (settings == null)
         {
-          UserId = userRecord.Id,
-          GuildId = guildId,
-          User = userRecord
-        };
-        Db.Economies.Add(userEconomy);
-        await Db.SaveChangesAsync();
-      }
+          await FollowupAsync("❌ This server has not set a daily currency yet. Use `/setdailycurrency` first.");
+          return;
+        }
 
-      // Step 3: Check if already claimed today
-      var now = DateTime.UtcNow;
-      if (userEconomy.LastClaimed.HasValue && userEconomy.LastClaimed.Value.Date == now.Date)
-      {
-        Logger.LogInformation($"User {username} ({discordId}) has already claimed daily today.");
-        await RespondAsync("❌ You've already claimed your daily reward today! Try again tomorrow.");
-        return;
-      }
+        var dailyCurrency = settings.DailyCurrency;
 
-      // Step 4: Streak logic
-      userEconomy.StreakCount = (userEconomy.LastClaimed.HasValue &&
-                                 userEconomy.LastClaimed.Value.Date == now.Date.AddDays(-1))
-                                 ? userEconomy.StreakCount + 1 : 1;
-
-      // Step 5: Calculate reward
-      int baseAmount = 100;
-      double streakMultiplier = GetStreakMultiplier(userEconomy.StreakCount);
-      double bonusMultiplier = 1 + (new Random().NextDouble() * 0.2);
-      int reward = (int)(baseAmount * streakMultiplier * bonusMultiplier);
-
-      // Step 6: Get/create balance for user + currency + guild
-      var balance = await Db.CurrencyBalances
-          .FirstOrDefaultAsync(b =>
-              b.UserId == userRecord.Id &&
-              b.CurrencyTypeId == dailyCurrency.Id &&
-              b.GuildId == guildId);
-
-      if (balance == null)
-      {
-        balance = new UserCurrencyBalance
+        // Step 1: Ensure UserRecord Exists
+        var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == discordId);
+        if (userRecord == null)
         {
-          UserId = userRecord.Id,
-          CurrencyTypeId = dailyCurrency.Id,
-          GuildId = guildId,
-          Amount = 0
-        };
-        Db.CurrencyBalances.Add(balance);
+          Logger.LogInformation($"Creating new user record for {username} ({discordId})");
+          userRecord = new UserRecord { DiscordId = discordId, Username = username };
+          Db.Users.Add(userRecord);
+          await Db.SaveChangesAsync();
+        }
+
+        // Step 2: Ensure UserEconomy Exists (per guild)
+        var userEconomy = await Db.Economies
+            .FirstOrDefaultAsync(e => e.UserId == userRecord.Id && e.GuildId == guildId);
+
+        if (userEconomy == null)
+        {
+          Logger.LogInformation($"Creating new economy record for {username} ({discordId})");
+          userEconomy = new UserEconomy
+          {
+            UserId = userRecord.Id,
+            GuildId = guildId,
+            User = userRecord
+          };
+          Db.Economies.Add(userEconomy);
+          await Db.SaveChangesAsync();
+        }
+
+        // Step 3: Check if already claimed today
+        var now = DateTime.UtcNow;
+        if (userEconomy.LastClaimed.HasValue && userEconomy.LastClaimed.Value.Date == now.Date)
+        {
+          Logger.LogInformation($"User {username} ({discordId}) has already claimed daily today.");
+
+          // Calculate next reset: next UTC midnight
+          var nextReset = DateTimeOffset.UtcNow.Date.AddDays(1); // Midnight UTC tomorrow
+          var nextResetUnix = ((DateTimeOffset)nextReset).ToUnixTimeSeconds(); // Discord-ready timestamp
+
+          await FollowupAsync($"❌ You've already claimed your daily reward today!\nYou can claim again <t:{nextResetUnix}:F> (**<t:{nextResetUnix}:R>**).");
+          return;
+        }
+
+
+        // Step 4: Streak logic
+        userEconomy.StreakCount = (userEconomy.LastClaimed.HasValue &&
+                                   userEconomy.LastClaimed.Value.Date == now.Date.AddDays(-1))
+                                   ? userEconomy.StreakCount + 1 : 1;
+
+        // Step 5: Calculate reward
+        int baseAmount = 100;
+        double streakMultiplier = GetStreakMultiplier(userEconomy.StreakCount);
+        double bonusMultiplier = 1 + (new Random().NextDouble() * 0.2);
+        int reward = (int)(baseAmount * streakMultiplier * bonusMultiplier);
+
+        // Step 6: Get/create balance for user + currency + guild
+        var balance = await Db.CurrencyBalances
+            .FirstOrDefaultAsync(b =>
+                b.UserId == userRecord.Id &&
+                b.CurrencyTypeId == dailyCurrency.Id &&
+                b.GuildId == guildId);
+
+        if (balance == null)
+        {
+          balance = new UserCurrencyBalance
+          {
+            UserId = userRecord.Id,
+            CurrencyTypeId = dailyCurrency.Id,
+            GuildId = guildId,
+            Amount = 0
+          };
+          Db.CurrencyBalances.Add(balance);
+        }
+
+        balance.Amount += reward;
+        userEconomy.LastClaimed = now;
+
+        await Db.SaveChangesAsync();
+
+        // Step 7: Respond
+        var embed = new EmbedBuilder()
+            .WithTitle("💰 Daily Reward Claimed!")
+            .WithDescription($"You received **{reward} {dailyCurrency.Name}**!")
+            .AddField("📈 Streak", $"{userEconomy.StreakCount} days", true)
+            .AddField("💵 Total Balance", $"{balance.Amount} {dailyCurrency.Name}", true)
+            .WithColor(Color.Gold)
+            .WithTimestamp(now)
+            .Build();
+
+        await FollowupAsync(embed: embed);
       }
-
-      balance.Amount += reward;
-      userEconomy.LastClaimed = now;
-
-      await Db.SaveChangesAsync();
-
-      // Step 7: Respond
-      var embed = new EmbedBuilder()
-          .WithTitle("💰 Daily Reward Claimed!")
-          .WithDescription($"You received **{reward} {dailyCurrency.Name}**!")
-          .AddField("📈 Streak", $"{userEconomy.StreakCount} days", true)
-          .AddField("💵 Total Balance", $"{balance.Amount} {dailyCurrency.Name}", true)
-          .WithColor(Color.Gold)
-          .WithTimestamp(now)
-          .Build();
-
-      await RespondAsync(embed: embed);
+      catch (System.Exception ex)
+      {
+        {
+          Logger.LogError(ex, "Error in DailyCommand: {Message}", ex.Message);
+          await FollowupAsync("❌ Something went wrong while processing your request.");
+          throw; // Rethrow the exception to be handled by the global exception handler
+        }
+      }
     }
 
     private double GetStreakMultiplier(int streak)

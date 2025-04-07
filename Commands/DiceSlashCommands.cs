@@ -21,49 +21,60 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
     public async Task RollDice(
         [Summary("message", "Dice expressions, e.g. 2d20+2 \"attack\"; 4d4+2 \"damage\"")] string message)
     {
-        // incase the command takes too long to respond, defer
-        await DeferAsync();
-
-        _logger.LogInformation("RollDice fired.");
-        // Split multiple expressions by semicolon
-        var expressions = message.Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-        // We'll build a single response for all expressions
-        // Each expression is one line, using commas and backticks.
-        var responseBuilder = new StringBuilder();
-
-        foreach (var rawExpr in expressions)
+        try
         {
-            // _logger.LogInformation($"Processing expression: {rawExpr}");
-            var expr = rawExpr.Trim();
-            var (diceExpr, label) = ParseExpression(expr);
-            // _logger.LogInformation($"Parsed: diceExpr={diceExpr}, label={label}");
-            // Roll the expression, capturing the full breakdown
-            var (rolls, total, faces, modifier) = _diceRoller.Roll(diceExpr);
-            _logger.LogInformation($"Rolls: {string.Join(", ", rolls)}, Total: {total}, Faces: {faces}, Modifier: {modifier}"); 
+            // incase the command takes too long to respond, defer
+            await DeferAsync();
 
-            // Format the list of individual rolls, e.g. [9, 2]
-            var rollsString = $"[{string.Join(", ", rolls)}]";
+            _logger.LogInformation("RollDice fired.");
+            // Split multiple expressions by semicolon
+            var expressions = message.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-            // Build one line with backticks
-            // Example:
-            // @SomeUser `Request: 2d20+2, Rolls: [9, 2], Result: 13, Label: attack`
-            var lineBuilder = new StringBuilder();
-            lineBuilder.Append(Context.User.Mention).Append(" ");
-            // lineBuilder.Append("`"); 
+            // We'll build a single response for all expressions
+            // Each expression is one line, using commas and backticks.
+            var responseBuilder = new StringBuilder();
 
-            if (!string.IsNullOrWhiteSpace(label))
+            foreach (var rawExpr in expressions)
             {
-                lineBuilder.Append($"Label: `{label}`");
+                // _logger.LogInformation($"Processing expression: {rawExpr}");
+                var expr = rawExpr.Trim();
+                var (diceExpr, label) = ParseExpression(expr);
+                // _logger.LogInformation($"Parsed: diceExpr={diceExpr}, label={label}");
+                // Roll the expression, capturing the full breakdown
+                var (rolls, total, faces, modifier) = _diceRoller.Roll(diceExpr);
+                _logger.LogInformation($"Rolls: {string.Join(", ", rolls)}, Total: {total}, Faces: {faces}, Modifier: {modifier}");
+
+                // Format the list of individual rolls, e.g. [9, 2]
+                var rollsString = $"[{string.Join(", ", rolls)}]";
+
+                // Build one line with backticks
+                // Example:
+                // @SomeUser `Request: 2d20+2, Rolls: [9, 2], Result: 13, Label: attack`
+                var lineBuilder = new StringBuilder();
+                lineBuilder.Append(Context.User.Mention).Append(" ");
+                // lineBuilder.Append("`"); 
+
+                if (!string.IsNullOrWhiteSpace(label))
+                {
+                    lineBuilder.Append($"Label: `{label}`");
+                }
+                lineBuilder.Append($", Request: `{diceExpr}`, Rolls: `{rollsString}`, Result: `{total}`");
+
+                // lineBuilder.Append("`"); // end backtick
+
+                responseBuilder.AppendLine(lineBuilder.ToString());
             }
-            lineBuilder.Append($", Request: `{diceExpr}`, Rolls: `{rollsString}`, Result: `{total}`");
 
-            // lineBuilder.Append("`"); // end backtick
+            await FollowupAsync(responseBuilder.ToString());
 
-            responseBuilder.AppendLine(lineBuilder.ToString());
         }
 
-        await FollowupAsync(responseBuilder.ToString());
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "DeferAsync failed.");
+            await RespondAsync("❌ Something went wrong while preparing your command.");
+            throw; // Rethrow the exception to be handled by the global exception handler
+        }
     }
 
     /// <summary>
