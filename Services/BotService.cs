@@ -82,7 +82,7 @@ public class DiscordBotService
 
 
     // Option B (comment out if using Option A): Register globally (takes up to an hour to update)
-    await _interactionService.RegisterCommandsGloballyAsync();
+    await _interactionService.RegisterCommandsGloballyAsync(true);
   }
   private async Task HandleInteraction(SocketInteraction arg)
   {
