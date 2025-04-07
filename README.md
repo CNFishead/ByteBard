@@ -15,7 +15,7 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 
 ## 📜 Command List
 
-### `/economy daily`
+### `/daily`
 > Claim your daily reward.
 - Tied to the configured daily currency for the server
 - Tracks streaks and gives randomized rewards
@@ -23,7 +23,7 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 
 ---
 
-### `/economy modifycurrency <@user> <currency> <amount>`
+### `/modifycurrency <@user> <currency> <amount>`
 > Admin command to adjust a user's balance
 - Positive values add
 - Negative values subtract (but cannot drop below zero)
@@ -31,21 +31,21 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 
 ---
 
-### `/economy listcurrencies`
+### `/listcurrencies`
 > View all currencies created for this server
 - Shows currencies in an embed layout
 - Only shows currencies tied to the server the command is used in
 
 ---
 
-### `/economy balance <currency>`
+### `/balance <currency>`
 > Check your balance for a specific currency
 - Only shows your balance for the current server
 - Shows a value even if your balance is zero
 
 ---
 
-### `/economy transfercurrency <@user> <currency> <amount>`
+### `/transfercurrency <@user> <currency> <amount>`
 > Send currency to another user
 - Sender must have enough funds
 - Recipient receives a DM notification (if possible)
@@ -53,14 +53,14 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 
 ---
 
-### `/economy addcurrencytype <name>`
+### `/addcurrencytype <name>`
 > Create a new currency for your server
 - Currency is only visible and usable in the current server
 - Prevents duplicate currency names within the same server
 
 ---
 
-### `/economy setdailycurrency <currency>`
+### `/setdailycurrency <currency>`
 > Set which currency `/daily` rewards in this server
 - Currency must already exist in the server
 - Updates the server's `ServerSettings` record
@@ -69,7 +69,7 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 
 ## 🗂 File Structure Suggestion
 ```text
-/Modules/Economy/
+/Commands/Economy/
 ├── AddCurrencyTypeCommand.cs
 ├── BalanceCommand.cs
 ├── DailyCommand.cs
@@ -89,5 +89,3 @@ Each command is separated into its own file, grouped under `economy`, and suppor
 - Consider adding cooldowns, logging, and audit history tables for production
 
 ---
-
-Let me know if you'd like this README in `.md` file format or want help generating help messages from it in-bot! 🚀
