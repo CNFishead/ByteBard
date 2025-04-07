@@ -15,11 +15,11 @@ namespace FallVerseBotV2.Commands.Economy
       var guildId = Context.Guild.Id;
       var userId = Context.User.Id;
       var username = Context.User.Username;
-
+      await DeferAsync();
       var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == userId);
       if (userRecord == null)
       {
-        await RespondAsync("❌ You don't have a user record yet. Try using `/daily` first.");
+        await FollowupAsync("❌ You don't have a user record yet. Try using `/daily` first.");
         return;
       }
 
@@ -33,7 +33,7 @@ namespace FallVerseBotV2.Commands.Economy
 
         if (currency == null)
         {
-          await RespondAsync($"❌ Currency `{currencyName}` does not exist in this server.");
+          await FollowupAsync($"❌ Currency `{currencyName}` does not exist in this server.");
           return;
         }
 
@@ -53,7 +53,7 @@ namespace FallVerseBotV2.Commands.Economy
             .WithTimestamp(DateTime.UtcNow)
             .Build();
 
-        await RespondAsync(embed: embed);
+        await FollowupAsync(embed: embed);
         return;
       }
 
@@ -65,7 +65,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (!balances.Any())
       {
-        await RespondAsync("ℹ️ You have no currency balances in this server.");
+        await FollowupAsync("ℹ️ You have no currency balances in this server.");
         return;
       }
 
@@ -80,7 +80,7 @@ namespace FallVerseBotV2.Commands.Economy
         embedAll.AddField(b.CurrencyType.Name, formatted, inline: true);
       }
 
-      await RespondAsync(embed: embedAll.Build());
+      await FollowupAsync(embed: embedAll.Build());
     }
   }
 }

@@ -15,7 +15,7 @@ namespace FallVerseBotV2.Commands.Economy
       var discordId = Context.User.Id;
       var username = Context.User.Username;
       var guildId = Context.Guild.Id;
-
+      await DeferAsync();
       // Step 0: Get Daily Currency for This Server
       var settings = await Db.ServerSettings
           .Include(s => s.DailyCurrency)
@@ -23,7 +23,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (settings == null)
       {
-        await RespondAsync("❌ This server has not set a daily currency yet. Use `/setdailycurrency` first.");
+        await FollowupAsync("❌ This server has not set a daily currency yet. Use `/setdailycurrency` first.");
         return;
       }
 
@@ -61,9 +61,15 @@ namespace FallVerseBotV2.Commands.Economy
       if (userEconomy.LastClaimed.HasValue && userEconomy.LastClaimed.Value.Date == now.Date)
       {
         Logger.LogInformation($"User {username} ({discordId}) has already claimed daily today.");
-        await RespondAsync("❌ You've already claimed your daily reward today! Try again tomorrow.");
+
+        // Calculate next reset: midnight UTC
+        var nextReset = DateTimeOffset.UtcNow.Date.AddDays(1);
+        var nextResetUnix = ((DateTimeOffset)nextReset).ToUnixTimeSeconds();
+
+        await FollowupAsync($"❌ You've already claimed your daily reward today!\nYou can claim again <t:{nextResetUnix}:F> (**<t:{nextResetUnix}:R>**).");
         return;
       }
+
 
       // Step 4: Streak logic
       userEconomy.StreakCount = (userEconomy.LastClaimed.HasValue &&
@@ -110,7 +116,7 @@ namespace FallVerseBotV2.Commands.Economy
           .WithTimestamp(now)
           .Build();
 
-      await RespondAsync(embed: embed);
+      await FollowupAsync(embed: embed);
     }
 
     private double GetStreakMultiplier(int streak)

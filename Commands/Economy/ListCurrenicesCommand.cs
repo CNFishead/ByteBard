@@ -14,14 +14,14 @@ namespace FallVerseBotV2.Commands.Economy
     public async Task ListAsync()
     {
       var guildId = Context.Guild.Id;
-
+      await DeferAsync();
       var currencies = await Db.CurrencyTypes
           .Where(c => c.GuildId == guildId)
           .ToListAsync();
 
       if (!currencies.Any())
       {
-        await RespondAsync("ℹ️ No currencies have been added yet in this server.");
+        await FollowupAsync("ℹ️ No currencies have been added yet in this server.");
         return;
       }
 
@@ -34,7 +34,7 @@ namespace FallVerseBotV2.Commands.Economy
         embed.AddField(currency.Name, "\u200B", true);
       }
 
-      await RespondAsync(embed: embed.Build());
+      await FollowupAsync(embed: embed.Build());
     }
   }
 }

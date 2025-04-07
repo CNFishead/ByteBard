@@ -15,16 +15,16 @@ namespace FallVerseBotV2.Commands.Economy
       var guildId = Context.Guild.Id;
       var senderId = Context.User.Id;
       var receiverId = recipient.Id;
-
+      await DeferAsync();
       if (senderId == receiverId)
       {
-        await RespondAsync("❌ You can't transfer currency to yourself.");
+        await FollowupAsync("❌ You can't transfer currency to yourself.");
         return;
       }
 
       if (amount <= 0)
       {
-        await RespondAsync("❌ Transfer amount must be greater than zero.");
+        await FollowupAsync("❌ Transfer amount must be greater than zero.");
         return;
       }
 
@@ -33,7 +33,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (senderRecord == null || receiverRecord == null)
       {
-        await RespondAsync("❌ Both sender and recipient must have a user record.");
+        await FollowupAsync("❌ Both sender and recipient must have a user record.");
         return;
       }
 
@@ -42,7 +42,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (currency == null)
       {
-        await RespondAsync($"❌ Currency `{currencyName}` does not exist in this server.");
+        await FollowupAsync($"❌ Currency `{currencyName}` does not exist in this server.");
         return;
       }
 
@@ -51,7 +51,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (senderBalance == null || senderBalance.Amount < amount)
       {
-        await RespondAsync("❌ You don't have enough funds to complete this transaction.");
+        await FollowupAsync("❌ You don't have enough funds to complete this transaction.");
         return;
       }
 
@@ -100,7 +100,7 @@ namespace FallVerseBotV2.Commands.Economy
           .WithTimestamp(DateTime.UtcNow)
           .Build();
 
-      await RespondAsync(embed: embed);
+      await FollowupAsync(embed: embed);
     }
   }
 }

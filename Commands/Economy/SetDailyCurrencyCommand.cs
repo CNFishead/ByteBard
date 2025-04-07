@@ -11,7 +11,7 @@ namespace FallVerseBotV2.Commands.Economy
     public async Task SetDailyCurrency(string currencyName)
     {
       var guildId = Context.Guild.Id;
-
+      await DeferAsync();
       // Look for a currency that belongs to this guild
       var currency = await Db.CurrencyTypes
           .FirstOrDefaultAsync(c =>
@@ -20,7 +20,7 @@ namespace FallVerseBotV2.Commands.Economy
 
       if (currency == null)
       {
-        await RespondAsync($"❌ Currency `{currencyName}` does not exist in this server.");
+        await FollowupAsync($"❌ Currency `{currencyName}` does not exist in this server.");
         return;
       }
 
@@ -42,7 +42,7 @@ namespace FallVerseBotV2.Commands.Economy
       }
 
       await Db.SaveChangesAsync();
-      await RespondAsync($"✅ `{currencyName}` is now the daily currency for this server.");
+      await FollowupAsync($"✅ `{currencyName}` is now the daily currency for this server.");
     }
   }
 }

@@ -12,14 +12,14 @@ namespace FallVerseBotV2.Commands.Economy
     {
       var guildId = Context.Guild.Id;
       var lowerName = name.ToLower();
-
+      await DeferAsync();
       // Ensure the currency does not already exist in this guild
       var exists = await Db.CurrencyTypes
           .AnyAsync(c => c.GuildId == guildId && c.Name.ToLower() == lowerName);
 
       if (exists)
       {
-        await RespondAsync($"❌ Currency `{name}` already exists in this server.");
+        await FollowupAsync($"❌ Currency `{name}` already exists in this server.");
         return;
       }
 
@@ -33,7 +33,7 @@ namespace FallVerseBotV2.Commands.Economy
       Db.CurrencyTypes.Add(currency);
       await Db.SaveChangesAsync();
 
-      await RespondAsync($"✅ Currency `{name}` has been added to this server.");
+      await FollowupAsync($"✅ Currency `{name}` has been added to this server.");
     }
   }
 }
