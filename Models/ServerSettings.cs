@@ -8,6 +8,9 @@ public class ServerSettings
 
   [ForeignKey(nameof(DailyCurrency))]
   public int DailyCurrencyId { get; set; }
+  [ForeignKey(nameof(CasinoCurrency))]
+  public int? CasinoCurrencyId { get; set; }
 
+  public virtual CurrencyType? CasinoCurrency { get; set; }
   public virtual CurrencyType DailyCurrency { get; set; } = null!;
 }
