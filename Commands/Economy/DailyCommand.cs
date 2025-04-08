@@ -76,13 +76,22 @@ namespace FallVerseBotV2.Commands.Economy
         }
 
 
-        // Step 4: Streak logic
-        userEconomy.StreakCount = (userEconomy.LastClaimed.HasValue &&
-                                   userEconomy.LastClaimed.Value.Date == now.Date.AddDays(-1))
-                                   ? userEconomy.StreakCount + 1 : 1;
+        int? daysSinceLastClaim = userEconomy.LastClaimed.HasValue
+    ? (now.Date - userEconomy.LastClaimed.Value.Date).Days
+    : (int?)null;
+
+        if (daysSinceLastClaim == 1)
+        {
+          userEconomy.StreakCount += 1;
+        }
+        else
+        {
+          userEconomy.StreakCount = 1;
+        }
+
 
         // Step 5: Calculate reward
-        int baseAmount = 100;
+        int baseAmount = 25;
         double streakMultiplier = GetStreakMultiplier(userEconomy.StreakCount);
         double bonusMultiplier = 1 + (new Random().NextDouble() * 0.2);
         int reward = (int)(baseAmount * streakMultiplier * bonusMultiplier);
@@ -117,6 +126,7 @@ namespace FallVerseBotV2.Commands.Economy
             .WithDescription($"You received **{reward} {dailyCurrency.Name}**!")
             .AddField("📈 Streak", $"{userEconomy.StreakCount} days", true)
             .AddField("💵 Total Balance", $"{balance.Amount} {dailyCurrency.Name}", true)
+            .AddField("🏆 Streak Tier", GetStreakLabel(userEconomy.StreakCount), true)
             .WithColor(Color.Gold)
             .WithTimestamp(now)
             .Build();
@@ -135,10 +145,18 @@ namespace FallVerseBotV2.Commands.Economy
 
     private double GetStreakMultiplier(int streak)
     {
-      if (streak >= 14) return 1.0;
-      if (streak >= 7) return 0.75;
-      if (streak >= 4) return 0.5;
-      return 0.25;
+      return Math.Min(1.0 + Math.Log10(streak + 1) * 0.6, 5.0);
     }
+    private string GetStreakLabel(int streak)
+    {
+      if (streak >= 365) return "🔥 Eternal";
+      if (streak >= 180) return "💎 Legendary";
+      if (streak >= 90) return "🌟 Veteran";
+      if (streak >= 30) return "💪 Committed";
+      if (streak >= 7) return "📈 Consistent";
+      return "🌱 Getting Started";
+    }
+
   }
+
 }
