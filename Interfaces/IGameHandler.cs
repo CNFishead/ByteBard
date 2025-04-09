@@ -2,7 +2,6 @@ using Discord.Interactions;
 
 public interface IGameHandler
 {
-    string GameKey { get; }
-    Task Run(SocketInteractionContext context, int amount);
+    string GameKey { get; } 
     Task Replay(SocketInteractionContext context);
 }

@@ -1,11 +1,14 @@
+using System.Text.Json;
+using Discord;
 using Discord.Interactions;
 using FallVerseBotV2.Enums;
 using Microsoft.EntityFrameworkCore;
 
-public class CoinFlipHandler
+public class CoinFlipHandler : IGameHandler
 {
   private readonly ILogger<CoinFlipHandler> _logger;
   private readonly BotDbContext _db;
+  public string GameKey => "coinflip";
 
   public CoinFlipHandler(ILogger<CoinFlipHandler> logger, BotDbContext db)
   {
@@ -73,8 +76,75 @@ public class CoinFlipHandler
         outcomeMessage = $"😢 You guessed **{choice}** but it landed on **{result}**.\nYou lost `{amount}` {currency.Name}.";
       }
 
+      // Step 5: Update the database
+      var userGameStats = await _db.UserGameStats
+          .FirstOrDefaultAsync(s => s.UserId == userRecord.Id && s.GuildId == guildId && s.GameKey == GameKey);
+
+      if (userGameStats == null)
+      {
+        userGameStats = new UserGameStats
+        {
+          UserId = userRecord.Id,
+          GuildId = guildId,
+          GameKey = GameKey,
+          Wins = result == choice ? 1 : 0,
+          Losses = result != choice ? 1 : 0,
+          NetGain = result == choice ? amount : -amount,
+          TotalWagered = amount,
+          LastGameData = new Dictionary<string, JsonElement>
+          {
+            ["amount"] = JsonSerializer.SerializeToElement(amount),
+            ["choice"] = JsonSerializer.SerializeToElement(choice.ToString()),
+          },
+        };
+        _db.UserGameStats.Add(userGameStats);
+      }
+      else
+      {
+        userGameStats.Wins += result == choice ? 1 : 0;
+        userGameStats.Losses += result != choice ? 1 : 0;
+        userGameStats.TotalWagered += amount;
+        userGameStats.NetGain += result == choice ? amount : -amount;
+        userGameStats.LastPlayed = DateTime.UtcNow;
+        userGameStats.LastGameData.Clear(); // Clear previous game data
+
+        if (userGameStats.LastGameData == null)
+          userGameStats.LastGameData = new Dictionary<string, JsonElement>();
+
+        userGameStats.LastGameData["amount"] = JsonSerializer.SerializeToElement(amount);
+        userGameStats.LastGameData["choice"] = JsonSerializer.SerializeToElement(choice.ToString());
+      }
+
+
       await _db.SaveChangesAsync();
-      await context.Interaction.FollowupAsync(outcomeMessage);
+      // Win/loss stats summary
+      int totalGames = userGameStats.Wins + userGameStats.Losses;
+      double winPct = totalGames > 0 ? (double)userGameStats.Wins / totalGames * 100 : 0;
+      double lossPct = totalGames > 0 ? (double)userGameStats.Losses / totalGames * 100 : 0;
+
+      string statsSummary = $"**Wins:** {userGameStats.Wins} ({winPct:F1}%)\n" +
+                            $"**Losses:** {userGameStats.Losses} ({lossPct:F1}%)\n" +
+                            $"**Net Gain:** {userGameStats.NetGain} {currency.Name}";
+
+      // Build the embed
+      var embed = new EmbedBuilder()
+          .WithTitle("🪙 Coin Flip Results")
+          .WithColor(Color.Blue)
+          .AddField("Your Guess", choice.ToString(), true)
+          .AddField("Coin Landed On", result.ToString(), true)
+          .AddField("Outcome", outcomeMessage, false)
+          .AddField("Starting Balance", $"{userBalance.Amount + (result == choice ? -amount : amount)} {currency.Name}", true)
+          .AddField("Ending Balance", $"{userBalance.Amount} {currency.Name}", true)
+          .AddField("Your Stats", statsSummary)
+          .WithFooter(footer => footer.Text = result == choice ? "🎉 You won!" : "😢 Better luck next time!")
+          .WithCurrentTimestamp()
+          .Build();
+
+      // Button component
+      var component = CasinoButtonBuilder.BuildPlayAgainButton(GameKey);
+      // await context.Interaction.FollowupAsync(embed: embed, components: component);
+
+      await context.Interaction.FollowupAsync(embed: embed);
     }
     catch (Exception ex)
     {
@@ -122,5 +192,40 @@ public class CoinFlipHandler
     if (percent < 0.50) return 4;
     return 5; // Cap bias at 5
   }
+  public async Task Replay(SocketInteractionContext context)
+  {
+    var userId = context.User.Id;
+    var guildId = context.Guild.Id;
+
+    var userRecord = await _db.Users.FirstOrDefaultAsync(u => u.DiscordId == userId);
+    if (userRecord == null)
+    {
+      await context.Interaction.RespondAsync("⚠️ You don't have a profile yet. Try `/daily` first.", ephemeral: true);
+      return;
+    }
+
+    var stats = await _db.UserGameStats
+        .FirstOrDefaultAsync(s => s.UserId == userRecord.Id && s.GuildId == guildId && s.GameKey == GameKey);
+
+    if (stats == null || stats.TotalGames == 0 || stats.LastGameData.Count == 0)
+    {
+      await context.Interaction.RespondAsync("⚠️ You need to play this game at least once before replaying.", ephemeral: true);
+      return;
+    }
+
+    var replayData = new GameReplayData(stats.LastGameData);
+    int amount = replayData.BetAmount;
+    string choiceStr = replayData.Choice;
+
+    if (!Enum.TryParse(choiceStr, out CoinSide choice))
+    {
+      await context.Interaction.RespondAsync("❌ Could not parse your last coin flip choice.", ephemeral: true);
+      return;
+    }
+
+    await Run(context, choice, amount);
+  }
+
+
 
 }

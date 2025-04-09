@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 public class DatabaseModule : IBaseModule
 {
@@ -12,6 +13,8 @@ public class DatabaseModule : IBaseModule
 
     services.AddDbContext<BotDbContext>(options =>
         options.UseNpgsql(connectionString)
-    );
+    );  
+    // ✅ Enable dynamic JSON reading
+    NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
   }
 }

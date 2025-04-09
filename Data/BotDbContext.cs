@@ -34,6 +34,11 @@ public class BotDbContext : DbContext
         .WithMany()
         .HasForeignKey(s => s.DailyCurrencyId)
         .OnDelete(DeleteBehavior.Restrict);
+        
+    modelBuilder.Entity<UserGameStats>()
+        .Property(e => e.LastGameData)
+        .HasColumnType("jsonb")
+        .HasDefaultValueSql("'{}'::jsonb");
 
     // Force all DateTime values to UTC
     foreach (var entity in modelBuilder.Model.GetEntityTypes())

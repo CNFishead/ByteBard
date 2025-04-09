@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
@@ -97,13 +98,18 @@ public class DiceDuelHandler : IGameHandler
       {
         UserId = userRecord.Id,
         GuildId = guildId,
-        GameKey = "diceduel",
+        GameKey = GameKey,
         Wins = playerRoll > botRoll ? 1 : 0,
         Losses = playerRoll < botRoll ? 1 : 0,
         Ties = playerRoll == botRoll ? 1 : 0,
         TotalWagered = amount,
         NetGain = playerRoll > botRoll ? amount : -amount,
-        LastPlayed = DateTime.UtcNow
+        LastPlayed = DateTime.UtcNow,
+        LastGameData = new Dictionary<string, JsonElement>
+        {
+          ["amount"] = JsonSerializer.SerializeToElement(amount),
+          ["dieFaces"] = JsonSerializer.SerializeToElement(dieFaces),
+        }
       };
       _db.UserGameStats.Add(userGameStats);
     }
@@ -117,7 +123,29 @@ public class DiceDuelHandler : IGameHandler
       userGameStats.TotalWagered += amount;
       userGameStats.NetGain += playerRoll > botRoll ? amount : -amount;
       userGameStats.LastPlayed = DateTime.UtcNow;
+      if (userGameStats.LastGameData == null)
+        userGameStats.LastGameData = new Dictionary<string, JsonElement>();
+
+      userGameStats.LastGameData["amount"] = JsonSerializer.SerializeToElement(amount);
+      userGameStats.LastGameData["dieFaces"] = JsonSerializer.SerializeToElement(dieFaces);
     }
+
+    // log the game data for debugging
+    _logger.LogInformation("Saving UserGameStats: {@Stats}", new
+    {
+      userGameStats.UserId,
+      userGameStats.GuildId,
+      userGameStats.GameKey,
+      userGameStats.Wins,
+      userGameStats.Losses,
+      userGameStats.Ties,
+      userGameStats.NetGain,
+      userGameStats.TotalWagered,
+      userGameStats.LastPlayed,
+      LastGameData = JsonSerializer.Serialize(userGameStats.LastGameData)
+    });
+
+
 
     await _db.SaveChangesAsync();
 
@@ -138,10 +166,10 @@ public class DiceDuelHandler : IGameHandler
      .WithTitle("🎲 Dice Duel Results")
      .WithColor(Color.Gold)
      .AddField("You Rolled", $"🎲 **{playerRoll}**", true)
-     .AddField("Opponent Rolled", $"🎲 **{botRoll}**", true)
+     .AddField("Opponent Rolled", $"🎲 **{botRoll}**")
      .AddField("Starting Balance", $"{userStartBalance} {currency.Name}", true)
      .AddField("Ending Balance", $"{balance.Amount} {currency.Name}", true)
-    .AddField("Your Stats", statsSummary, true)
+     .AddField("Your Stats", statsSummary)
      .WithFooter(footer =>
      {
        footer.Text = resultMessage;
@@ -151,9 +179,10 @@ public class DiceDuelHandler : IGameHandler
 
 
     // Create "Play Again" button
-    var component = CasinoButtonBuilder.BuildPlayAgainButton("diceduel");
+    // var component = CasinoButtonBuilder.BuildPlayAgainButton("diceduel");
+    // await context.Interaction.FollowupAsync(embed: embed, components: component);
 
-    await context.Interaction.FollowupAsync(embed: embed, components: component);
+    await context.Interaction.FollowupAsync(embed: embed);
   }
 
   private int SimulatedDiceRoll(int min, int max)
@@ -201,14 +230,31 @@ public class DiceDuelHandler : IGameHandler
     var stats = await _db.UserGameStats
         .FirstOrDefaultAsync(s => s.UserId == userRecord.Id && s.GuildId == guildId && s.GameKey == GameKey);
 
-    if (stats == null || stats.TotalGames == 0)
+    if (stats == null)
     {
       await context.Interaction.RespondAsync("⚠️ No recent data found for replay.", ephemeral: true);
       return;
     }
 
-    int averageBet = stats.TotalWagered / stats.TotalGames;
-    await Run(context, averageBet);
+    var replayData = new GameReplayData(stats.LastGameData);
+    // log replayData for debugging
+    // _logger.LogInformation("Loaded GameReplayData: {@Data}", new
+    // {
+    //   RawData = JsonSerializer.Serialize(stats.LastGameData),
+    //   BetAmount = replayData.BetAmount,
+    //   DieFaces = replayData.DieFaces
+    // });
+
+    int amount = replayData.BetAmount;
+
+    if (amount <= 0)
+    {
+      await context.Interaction.RespondAsync("⚠️ Could not determine your last bet amount.", ephemeral: true);
+      return;
+    }
+
+    await Run(context, amount);
   }
+
 
 }

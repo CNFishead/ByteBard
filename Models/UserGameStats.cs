@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 public class UserGameStats
 {
@@ -14,6 +15,10 @@ public class UserGameStats
 
     [Required]
     public ulong GuildId { get; set; }
+
+    
+    [Column(TypeName = "jsonb")]
+    public Dictionary<string, JsonElement> LastGameData { get; set; } = new();
 
     public int Wins { get; set; } = 0;
     public int Losses { get; set; } = 0;
