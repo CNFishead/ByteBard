@@ -226,6 +226,4 @@ public class CoinFlipHandler : IGameHandler
     await Run(context, choice, amount);
   }
 
-
-
 }
