@@ -77,7 +77,7 @@ public class DiscordBotService
   private async Task OnReadyAsync()
   {
     // Option A: Register commands to a single guild for *faster updates* (guild commands update instantly)
-    ulong guildId = 1134608960528322600; // Replace with your test guild ID
+    ulong guildId = 669684447704121374; // Replace with your test guild ID
     await _interactionService.RegisterCommandsToGuildAsync(guildId, true);
 
 
