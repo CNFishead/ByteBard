@@ -165,17 +165,24 @@ public class DiceDuelHandler : IGameHandler
     var embed = new EmbedBuilder()
      .WithTitle("🎲 Dice Duel Results")
      .WithColor(Color.Gold)
+     .WithDescription($"{context.User.Mention}, {resultMessage}")
+     // Row 1: Player and Bot Rolls
      .AddField("You Rolled", $"🎲 **{playerRoll}**", true)
-     .AddField("Opponent Rolled", $"🎲 **{botRoll}**")
+     .AddField("Opponent Rolled", $"🎲 **{botRoll}**", true)
+     .AddField("\u200B", "\u200B", true) // Empty field to fill the 3rd slot in the row
+                                         // Row 2: Balances
      .AddField("Starting Balance", $"{userStartBalance} {currency.Name}", true)
      .AddField("Ending Balance", $"{balance.Amount} {currency.Name}", true)
-     .AddField("Your Stats", statsSummary)
+     .AddField("\u200B", "\u200B", true) // Padding again
+                                         // Row 3: Stats (alone)
+     .AddField("Your Stats", statsSummary, false)
      .WithFooter(footer =>
      {
-       footer.Text = resultMessage;
+       // footer.Text = resultMessage;
      })
      .WithCurrentTimestamp()
      .Build();
+
 
 
     // Create "Play Again" button
