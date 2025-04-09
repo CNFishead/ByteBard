@@ -1,4 +1,5 @@
 using System.Text;
+using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,7 @@ public class DiceDuelHandler
 
     var userId = context.User.Id;
     var guildId = context.Guild.Id;
+    const int dieFaces = 20; // Number of faces on the die
 
     await context.Interaction.DeferAsync();
 
@@ -46,15 +48,27 @@ public class DiceDuelHandler
         .FirstOrDefaultAsync(b => b.UserId == userRecord.Id &&
                                   b.CurrencyTypeId == currency.Id &&
                                   b.GuildId == guildId);
-
     if (balance == null || balance.Amount < amount)
     {
       await context.Interaction.FollowupAsync($"❌ You don't have enough {currency.Name} to bet {amount}.");
       return;
     }
 
-    int playerRoll = SimulatedDiceRoll(1, 6);
-    int botRoll = SimulatedDiceRoll(1, 6);
+    var userStartBalance = balance.Amount;
+    int playerRoll = SimulatedDiceRoll(1, dieFaces);
+    int botMinRoll = CalculateBotMinRoll(amount, balance.Amount, dieFaces);
+    int botRoll = SimulatedDiceRoll(botMinRoll, dieFaces);
+
+    // Handle 30% reroll chance on tie
+    if (playerRoll == botRoll)
+    {
+      var rng = new Random();
+      if (rng.NextDouble() < 0.30)
+      {
+        botRoll = SimulatedDiceRoll(botMinRoll, dieFaces); // reroll once
+      }
+    }
+
 
     string resultMessage;
     if (playerRoll > botRoll)
@@ -72,15 +86,76 @@ public class DiceDuelHandler
       resultMessage = $"🤝 Tie! You both rolled **{playerRoll}**. No change.";
     }
 
+    // fetch the users game stats
+    var userGameStats = await _db.UserGameStats
+        .FirstOrDefaultAsync(s => s.UserId == userRecord.Id && s.GuildId == guildId && s.GameKey == "diceduel");
+
+    if (userGameStats == null)
+    {
+      // create a new game stats record
+      userGameStats = new UserGameStats
+      {
+        UserId = userRecord.Id,
+        GuildId = guildId,
+        GameKey = "diceduel",
+        Wins = playerRoll > botRoll ? 1 : 0,
+        Losses = playerRoll < botRoll ? 1 : 0,
+        Ties = playerRoll == botRoll ? 1 : 0,
+        TotalWagered = amount,
+        NetGain = playerRoll > botRoll ? amount : -amount,
+        LastPlayed = DateTime.UtcNow
+      };
+      _db.UserGameStats.Add(userGameStats);
+    }
+
+    // otherwise we update the userGameRecord
+    else
+    {
+      userGameStats.Wins += playerRoll > botRoll ? 1 : 0;
+      userGameStats.Losses += playerRoll < botRoll ? 1 : 0;
+      userGameStats.Ties += playerRoll == botRoll ? 1 : 0;
+      userGameStats.TotalWagered += amount;
+      userGameStats.NetGain += playerRoll > botRoll ? amount : -amount;
+      userGameStats.LastPlayed = DateTime.UtcNow;
+    }
+
     await _db.SaveChangesAsync();
 
-    var output = new StringBuilder();
-    output.AppendLine("🎲 Rolling dice...");
-    output.AppendLine($"You: 🎲 **{playerRoll}**");
-    output.AppendLine($"Opponent: 🎲 **{botRoll}**");
-    output.AppendLine(resultMessage);
+    // Calculate percentages
+    int totalGames = userGameStats.Wins + userGameStats.Losses + userGameStats.Ties;
 
-    await context.Interaction.FollowupAsync(output.ToString());
+    double winPct = totalGames > 0 ? (double)userGameStats.Wins / totalGames * 100 : 0;
+    double lossPct = totalGames > 0 ? (double)userGameStats.Losses / totalGames * 100 : 0;
+    double tiePct = totalGames > 0 ? (double)userGameStats.Ties / totalGames * 100 : 0;
+
+    string statsSummary = $"**Wins:** {userGameStats.Wins} ({winPct:F1}%)\n" +
+                          $"**Losses:** {userGameStats.Losses} ({lossPct:F1}%)\n" +
+                          $"**Ties:** {userGameStats.Ties} ({tiePct:F1}%)\n" +
+                          $"**Net Gain:** {userGameStats.NetGain} {currency.Name}";
+                          
+
+    var embed = new EmbedBuilder()
+     .WithTitle("🎲 Dice Duel Results")
+     .WithColor(Color.Gold)
+     .AddField("You Rolled", $"🎲 **{playerRoll}**", true)
+     .AddField("Opponent Rolled", $"🎲 **{botRoll}**", true)
+     .AddField("Starting Balance", $"{userStartBalance} {currency.Name}", true)
+     .AddField("Ending Balance", $"{balance.Amount} {currency.Name}", true)
+    .AddField("Your Stats", statsSummary, true)
+     .WithFooter(footer =>
+     {
+       footer.Text = resultMessage;
+     })
+     .WithCurrentTimestamp()
+     .Build();
+
+
+    // Create "Play Again" button
+    var component = new ComponentBuilder()
+        .WithButton("Play Again", customId: "casino_diceduel_playagain", ButtonStyle.Primary)
+        .Build();
+
+    await context.Interaction.FollowupAsync(embed: embed, components: component);
   }
 
   private int SimulatedDiceRoll(int min, int max)
@@ -95,4 +170,23 @@ public class DiceDuelHandler
     return (roll % (max - min + 1)) + min;
 
   }
+  private static int CalculateBotMinRoll(int betAmount, int userBalance, int dieFaces)
+  {
+    if (userBalance == 0) return 1;
+
+    double percent = (double)betAmount / userBalance;
+    double factor;
+
+    if (percent < 0.05) factor = 0.0;
+    else if (percent < 0.10) factor = 0.1;
+    else if (percent < 0.25) factor = 0.2;
+    else if (percent < 0.50) factor = 0.3;
+    else if (percent < 0.75) factor = 0.4;
+    else factor = 0.5;
+
+    int rawMin = (int)(dieFaces * factor) + 1; // Add 1 for extra tilt
+    int cap = (int)(dieFaces * 0.5);           // Still capped at half
+    return Math.Min(rawMin, cap);
+  }
+
 }
