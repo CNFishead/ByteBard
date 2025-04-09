@@ -14,7 +14,7 @@ namespace FallVerseBotV2.Commands.Economy
     {
       try
       {
-        await DeferAsync(true);
+        await DeferAsync();
 
         var guildId = Context.Guild.Id;
         var discordId = user.Id;
