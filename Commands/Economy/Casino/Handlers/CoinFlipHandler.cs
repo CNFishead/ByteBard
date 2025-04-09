@@ -11,7 +11,7 @@ public class CoinFlipHandler
   {
     _logger = logger;
     _db = db;
-  } 
+  }
   public async Task Run(SocketInteractionContext context, CoinSide choice, int amount)
   {
     try
@@ -56,7 +56,9 @@ public class CoinFlipHandler
       }
 
       // Step 4: Flip the coin 
-      var result = SimulateCoinFlip(25); // Simulate 25 flips for better randomness
+      int botBias = CalculateBotBias(amount, userBalance.Amount);
+      var result = SimulateCoinFlip(choice, 25, botBias);
+
 
       string outcomeMessage;
 
@@ -81,13 +83,19 @@ public class CoinFlipHandler
       throw;
     }
   }
-  private static CoinSide SimulateCoinFlip(int trials = 25)
+  private static CoinSide SimulateCoinFlip(CoinSide userChoice, int trials = 25, int botBias = 5)
   {
     var rng = new Random();
     int heads = 0;
     int tails = 0;
 
-    for (int i = 0; i < trials; i++)
+    // Add bot bias: pre-load wins for the *opposite* of user's choice
+    if (userChoice == CoinSide.Heads)
+      tails += botBias;
+    else
+      heads += botBias;
+
+    for (int i = 0; i < trials - botBias; i++)
     {
       if (rng.Next(0, 2) == 0)
         tails++;
@@ -95,10 +103,24 @@ public class CoinFlipHandler
         heads++;
     }
 
-    // Tie-breaker: choose randomly
     if (heads == tails)
       return rng.Next(0, 2) == 0 ? CoinSide.Tails : CoinSide.Heads;
 
     return heads > tails ? CoinSide.Heads : CoinSide.Tails;
   }
+
+  private static int CalculateBotBias(int betAmount, int userBalance)
+  {
+    if (userBalance == 0)
+      return 1;
+
+    double percent = (double)betAmount / userBalance;
+
+    if (percent < 0.05) return 1;
+    if (percent < 0.10) return 2;
+    if (percent < 0.25) return 3;
+    if (percent < 0.50) return 4;
+    return 5; // Cap bias at 5
+  }
+
 }
