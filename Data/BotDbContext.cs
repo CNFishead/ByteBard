@@ -10,7 +10,7 @@ public class BotDbContext : DbContext
   public DbSet<CurrencyType> CurrencyTypes { get; set; }
   public DbSet<UserCurrencyBalance> CurrencyBalances { get; set; }
   public DbSet<ServerSettings> ServerSettings { get; set; }
-
+  public DbSet<UserGameStats> UserGameStats { get; set; } = null!;
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {

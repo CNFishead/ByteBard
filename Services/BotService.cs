@@ -26,6 +26,8 @@ public class DiscordBotService
     // Hook the MessageReceived event to handle commands
     _client.MessageReceived += HandleCommandAsync;
     _client.InteractionCreated += HandleInteraction;
+    _client.ButtonExecuted += HandleButtonInteraction;
+
     // Hook the Ready event to set the playing status
     _client.Ready += OnReadyAsync;
 
@@ -100,4 +102,42 @@ public class DiscordBotService
       // Handle errors
     }
   }
+
+  private async Task HandleButtonInteraction(SocketMessageComponent component)
+  {
+    try
+    {
+      // Expecting format: casino_<gameKey>_playagain
+      if (component.Data.CustomId.StartsWith("casino_") && component.Data.CustomId.EndsWith("_playagain"))
+      {
+        string[] parts = component.Data.CustomId.Split('_');
+        if (parts.Length < 3)
+        {
+          await component.RespondAsync("❌ Invalid button format.", ephemeral: true);
+          return;
+        }
+
+        string gameKey = parts[1];
+
+        using var scope = _services.CreateScope();
+        var registry = scope.ServiceProvider.GetRequiredService<IGameHandlerRegistry>();
+        var handler = registry.GetHandler(gameKey);
+
+        if (handler == null)
+        {
+          await component.RespondAsync($"❌ No handler found for game `{gameKey}`.", ephemeral: true);
+          return;
+        }
+
+        var context = new SocketInteractionContext(_client, component);
+        await handler.Replay(context);
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error in dynamic button handler: {ex}");
+      await component.RespondAsync("❌ Something went wrong with the replay feature.", ephemeral: true);
+    }
+  }
+
 }

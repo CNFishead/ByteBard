@@ -3,15 +3,19 @@ using Discord.Interactions;
 using FallVerseBotV2.Commands.Economy;
 using FallVerseBotV2.Commands.Economy.Casino.Handlers;
 using FallVerseBotV2.Enums;
+using Microsoft.Extensions.Logging;
 
 [Discord.Interactions.Group("casino", "Casino-related commands.")]
 public class CasinoModule : BaseCasinoModule
 {
-  public CasinoModule(ILogger<BaseCasinoModule> logger, BotDbContext db)
+  private readonly ILoggerFactory _loggerFactory;
+
+  public CasinoModule(ILogger<BaseCasinoModule> logger, ILoggerFactory loggerFactory, BotDbContext db)
       : base(logger, db)
   {
-    _diceDuel = new DiceDuelHandler(logger, db);
-    _coinFlip = new CoinFlipHandler(logger, db);
+    _loggerFactory = loggerFactory;
+    _diceDuel = new DiceDuelHandler(_loggerFactory.CreateLogger<DiceDuelHandler>(), db);
+    _coinFlip = new CoinFlipHandler(_loggerFactory.CreateLogger<CoinFlipHandler>(), db);
     _setCasinoCurrencyHandler = new SetCasinoCurrencyHandler(logger, db);
   } 
 

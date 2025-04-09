@@ -36,5 +36,11 @@ public class BotModule : IBaseModule
         services.AddSingleton<IDiceRoller, RandomOrgDiceRoller>();
         // Finally, register your DiscordBotService
         services.AddSingleton<DiscordBotService>();
+
+
+        // Register game handlers and registry
+        services.AddScoped<IGameHandler, DiceDuelHandler>(); // Add other handlers similarly
+
+        services.AddScoped<IGameHandlerRegistry, GameHandlerRegistry>();
     }
 }

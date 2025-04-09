@@ -3,12 +3,12 @@ using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
 
-public class DiceDuelHandler
+public class DiceDuelHandler : IGameHandler
 {
-  private readonly ILogger _logger;
+  private readonly ILogger<DiceDuelHandler> _logger;
   private readonly BotDbContext _db;
-
-  public DiceDuelHandler(ILogger logger, BotDbContext db)
+  public string GameKey => "diceduel";
+  public DiceDuelHandler(ILogger<DiceDuelHandler> logger, BotDbContext db)
   {
     _logger = logger;
     _db = db;
@@ -132,7 +132,7 @@ public class DiceDuelHandler
                           $"**Losses:** {userGameStats.Losses} ({lossPct:F1}%)\n" +
                           $"**Ties:** {userGameStats.Ties} ({tiePct:F1}%)\n" +
                           $"**Net Gain:** {userGameStats.NetGain} {currency.Name}";
-                          
+
 
     var embed = new EmbedBuilder()
      .WithTitle("🎲 Dice Duel Results")
@@ -151,9 +151,7 @@ public class DiceDuelHandler
 
 
     // Create "Play Again" button
-    var component = new ComponentBuilder()
-        .WithButton("Play Again", customId: "casino_diceduel_playagain", ButtonStyle.Primary)
-        .Build();
+    var component = CasinoButtonBuilder.BuildPlayAgainButton("diceduel");
 
     await context.Interaction.FollowupAsync(embed: embed, components: component);
   }
@@ -187,6 +185,30 @@ public class DiceDuelHandler
     int rawMin = (int)(dieFaces * factor) + 1; // Add 1 for extra tilt
     int cap = (int)(dieFaces * 0.5);           // Still capped at half
     return Math.Min(rawMin, cap);
+  }
+  public async Task Replay(SocketInteractionContext context)
+  {
+    var userId = context.User.Id;
+    var guildId = context.Guild.Id;
+
+    var userRecord = await _db.Users.FirstOrDefaultAsync(u => u.DiscordId == userId);
+    if (userRecord == null)
+    {
+      await context.Interaction.RespondAsync("⚠️ You need to use `/daily` before playing.", ephemeral: true);
+      return;
+    }
+
+    var stats = await _db.UserGameStats
+        .FirstOrDefaultAsync(s => s.UserId == userRecord.Id && s.GuildId == guildId && s.GameKey == GameKey);
+
+    if (stats == null || stats.TotalGames == 0)
+    {
+      await context.Interaction.RespondAsync("⚠️ No recent data found for replay.", ephemeral: true);
+      return;
+    }
+
+    int averageBet = stats.TotalWagered / stats.TotalGames;
+    await Run(context, averageBet);
   }
 
 }

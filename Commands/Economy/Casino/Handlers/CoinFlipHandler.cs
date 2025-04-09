@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 public class CoinFlipHandler
 {
-  private readonly ILogger _logger;
+  private readonly ILogger<CoinFlipHandler> _logger;
   private readonly BotDbContext _db;
 
-  public CoinFlipHandler(ILogger logger, BotDbContext db)
+  public CoinFlipHandler(ILogger<CoinFlipHandler> logger, BotDbContext db)
   {
     _logger = logger;
     _db = db;
