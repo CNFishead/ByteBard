@@ -123,29 +123,12 @@ public class DiceDuelHandler : IGameHandler
       userGameStats.TotalWagered += amount;
       userGameStats.NetGain += playerRoll > botRoll ? amount : playerRoll == botRoll ? 0 : -amount;
       userGameStats.LastPlayed = DateTime.UtcNow;
-      if (userGameStats.LastGameData == null)
-        userGameStats.LastGameData = new Dictionary<string, JsonElement>();
-
-      userGameStats.LastGameData["amount"] = JsonSerializer.SerializeToElement(amount);
-      userGameStats.LastGameData["dieFaces"] = JsonSerializer.SerializeToElement(dieFaces);
+      userGameStats.LastGameData = new Dictionary<string, JsonElement>
+      {
+        ["amount"] = JsonSerializer.SerializeToElement(amount),
+        ["dieFaces"] = JsonSerializer.SerializeToElement(dieFaces)
+      };
     }
-
-    // log the game data for debugging
-    _logger.LogInformation("Saving UserGameStats: {@Stats}", new
-    {
-      userGameStats.UserId,
-      userGameStats.GuildId,
-      userGameStats.GameKey,
-      userGameStats.Wins,
-      userGameStats.Losses,
-      userGameStats.Ties,
-      userGameStats.NetGain,
-      userGameStats.TotalWagered,
-      userGameStats.LastPlayed,
-      LastGameData = JsonSerializer.Serialize(userGameStats.LastGameData)
-    });
-
-
 
     await _db.SaveChangesAsync();
 
@@ -186,10 +169,10 @@ public class DiceDuelHandler : IGameHandler
 
 
     // Create "Play Again" button
-    // var component = CasinoButtonBuilder.BuildPlayAgainButton("diceduel");
-    // await context.Interaction.FollowupAsync(embed: embed, components: component);
+    var component = CasinoButtonBuilder.BuildPlayAgainButton("diceduel");
+    await context.Interaction.FollowupAsync(embed: embed, components: component);
 
-    await context.Interaction.FollowupAsync(embed: embed);
+    // await context.Interaction.FollowupAsync(embed: embed);
   }
 
   private int SimulatedDiceRoll(int min, int max)
@@ -244,13 +227,9 @@ public class DiceDuelHandler : IGameHandler
     }
 
     var replayData = new GameReplayData(stats.LastGameData);
-    // log replayData for debugging
-    // _logger.LogInformation("Loaded GameReplayData: {@Data}", new
-    // {
-    //   RawData = JsonSerializer.Serialize(stats.LastGameData),
-    //   BetAmount = replayData.BetAmount,
-    //   DieFaces = replayData.DieFaces
-    // });
+    // _logger.LogInformation("LastGameData Raw: {Json}", JsonSerializer.Serialize(stats.LastGameData));
+    // _logger.LogInformation("Parsed BetAmount: {Amount}, DieFaces: {Faces}",
+    //   replayData.BetAmount, replayData.DieFaces);
 
     int amount = replayData.BetAmount;
 

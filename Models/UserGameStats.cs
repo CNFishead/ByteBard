@@ -16,9 +16,17 @@ public class UserGameStats
     [Required]
     public ulong GuildId { get; set; }
 
-    
+
     [Column(TypeName = "jsonb")]
-    public Dictionary<string, JsonElement> LastGameData { get; set; } = new();
+    public string LastGameDataRaw { get; set; } = "{}";
+
+    [NotMapped]
+    public Dictionary<string, JsonElement> LastGameData
+    {
+        get => JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(LastGameDataRaw) ?? new();
+        set => LastGameDataRaw = JsonSerializer.Serialize(value);
+    }
+
 
     public int Wins { get; set; } = 0;
     public int Losses { get; set; } = 0;

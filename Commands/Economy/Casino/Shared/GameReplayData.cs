@@ -19,10 +19,8 @@ public class GameReplayData
     {
       try
       {
-        if (typeof(T) == typeof(int)) return (T)(object)json.GetInt32();
-        if (typeof(T) == typeof(string)) return (T)(object)json.GetString()!;
-        if (typeof(T) == typeof(bool)) return (T)(object)json.GetBoolean();
-        if (typeof(T) == typeof(double)) return (T)(object)json.GetDouble();
+        var raw = json.ToString(); // Reserialize to raw JSON string
+        return JsonSerializer.Deserialize<T>(raw)!;
       }
       catch (Exception ex)
       {
@@ -32,4 +30,5 @@ public class GameReplayData
 
     return fallback;
   }
+
 }

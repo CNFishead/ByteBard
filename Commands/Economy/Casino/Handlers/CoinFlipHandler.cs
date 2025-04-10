@@ -94,7 +94,7 @@ public class CoinFlipHandler : IGameHandler
           LastGameData = new Dictionary<string, JsonElement>
           {
             ["amount"] = JsonSerializer.SerializeToElement(amount),
-            ["choice"] = JsonSerializer.SerializeToElement(choice.ToString()),
+            ["choice"] = JsonSerializer.SerializeToElement(choice.ToString())
           },
         };
         _db.UserGameStats.Add(userGameStats);
@@ -107,12 +107,11 @@ public class CoinFlipHandler : IGameHandler
         userGameStats.NetGain += result == choice ? amount : -amount;
         userGameStats.LastPlayed = DateTime.UtcNow;
         userGameStats.LastGameData.Clear(); // Clear previous game data
-
-        if (userGameStats.LastGameData == null)
-          userGameStats.LastGameData = new Dictionary<string, JsonElement>();
-
-        userGameStats.LastGameData["amount"] = JsonSerializer.SerializeToElement(amount);
-        userGameStats.LastGameData["choice"] = JsonSerializer.SerializeToElement(choice.ToString());
+        userGameStats.LastGameData = new Dictionary<string, JsonElement>
+        {
+          ["amount"] = JsonSerializer.SerializeToElement(amount),
+          ["choice"] = JsonSerializer.SerializeToElement(choice.ToString())
+        };
       }
 
 
@@ -142,9 +141,9 @@ public class CoinFlipHandler : IGameHandler
 
       // Button component
       var component = CasinoButtonBuilder.BuildPlayAgainButton(GameKey);
-      // await context.Interaction.FollowupAsync(embed: embed, components: component);
+      await context.Interaction.FollowupAsync(embed: embed, components: component);
 
-      await context.Interaction.FollowupAsync(embed: embed);
+      // await context.Interaction.FollowupAsync(embed: embed);
     }
     catch (Exception ex)
     {
