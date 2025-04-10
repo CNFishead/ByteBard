@@ -103,7 +103,7 @@ public class DiceDuelHandler : IGameHandler
         Losses = playerRoll < botRoll ? 1 : 0,
         Ties = playerRoll == botRoll ? 1 : 0,
         TotalWagered = amount,
-        NetGain = playerRoll > botRoll ? amount : -amount,
+        NetGain = playerRoll > botRoll ? amount : playerRoll == botRoll ? 0 : -amount,
         LastPlayed = DateTime.UtcNow,
         LastGameData = new Dictionary<string, JsonElement>
         {
@@ -121,7 +121,7 @@ public class DiceDuelHandler : IGameHandler
       userGameStats.Losses += playerRoll < botRoll ? 1 : 0;
       userGameStats.Ties += playerRoll == botRoll ? 1 : 0;
       userGameStats.TotalWagered += amount;
-      userGameStats.NetGain += playerRoll > botRoll ? amount : -amount;
+      userGameStats.NetGain += playerRoll > botRoll ? amount : playerRoll == botRoll ? 0 : -amount;
       userGameStats.LastPlayed = DateTime.UtcNow;
       if (userGameStats.LastGameData == null)
         userGameStats.LastGameData = new Dictionary<string, JsonElement>();
