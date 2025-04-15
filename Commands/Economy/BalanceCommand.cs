@@ -54,6 +54,7 @@ namespace FallVerseBotV2.Commands.Economy
           var embed = new EmbedBuilder()
               .WithTitle($"💰 {currency.Name} Balance")
               .WithDescription($"{userToCheck.Mention} currently has **{formatted} {currency.Name}**.")
+              .WithFooter($"Requested by {Context.User.Username}", Context.User.GetAvatarUrl())
               .WithColor(Color.Teal)
               .WithTimestamp(DateTime.UtcNow)
               .Build();
@@ -76,7 +77,9 @@ namespace FallVerseBotV2.Commands.Economy
         }
 
         var embedAll = new EmbedBuilder()
-            .WithTitle($"💼 Balance Summary for {userToCheck.Mention}")
+            .WithTitle($"💼 Balance Summary")
+            .WithDescription($"{userToCheck.Mention} has the following balances:")
+            .WithFooter($"Requested by {Context.User.Username}", Context.User.GetAvatarUrl())
             .WithColor(Color.Teal)
             .WithTimestamp(DateTime.UtcNow);
 
