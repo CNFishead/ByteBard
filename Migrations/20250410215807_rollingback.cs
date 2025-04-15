@@ -12,10 +12,6 @@ namespace FallVerseBotV2.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "LastGameData1",
-                table: "UserGameStats");
-
             migrationBuilder.AlterColumn<Dictionary<string, JsonElement>>(
                 name: "LastGameData",
                 table: "UserGameStats",

@@ -72,7 +72,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
         catch (System.Exception ex)
         {
             _logger.LogError(ex, "DeferAsync failed.");
-            await RespondAsync("❌ Something went wrong while preparing your command.");
+            await FollowupAsync("❌ Something went wrong while preparing your command.");
             throw; // Rethrow the exception to be handled by the global exception handler
         }
     }

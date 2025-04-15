@@ -15,7 +15,7 @@ namespace FallVerseBotV2.Commands.Economy
       try
       {
 
-        await DeferAsync(true);
+        await DeferAsync();
         var guildId = Context.Guild.Id;
         var discordId = user.Id;
         var username = user.Username;
@@ -24,7 +24,7 @@ namespace FallVerseBotV2.Commands.Economy
         var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == discordId);
         if (userRecord == null)
         {
-          await FollowupAsync("❌ That user has no record in the database.");
+          await FollowupAsync("❌ That user has no record in the database.", ephemeral: true);
           return;
         }
 
@@ -36,7 +36,7 @@ namespace FallVerseBotV2.Commands.Economy
 
         if (currencyType == null)
         {
-          await FollowupAsync($"❌ Currency type `{currencyName}` does not exist in this server.");
+          await FollowupAsync($"❌ Currency type `{currencyName}` does not exist in this server.", ephemeral: true);
           return;
         }
 
@@ -62,7 +62,7 @@ namespace FallVerseBotV2.Commands.Economy
         // Prevent negative balances
         if (balance.Amount + amount < 0)
         {
-          await FollowupAsync("❌ This operation would result in a negative balance.");
+          await FollowupAsync("❌ This operation would result in a negative balance.", ephemeral: true);
           return;
         }
 

@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -10,19 +11,20 @@ namespace FallVerseBotV2.Commands.Economy
     public BalanceCommand(ILogger<BaseEconomyModule> logger, BotDbContext db) : base(logger, db) { }
 
     [SlashCommand("balance", "Check your balance for a specific currency or all.")]
-    public async Task CheckBalance(string? currencyName = null)
+    public async Task CheckBalance(SocketGuildUser? targetUser = null, string? currencyName = null)
     {
       try
       {
-        await DeferAsync(true);
+        await DeferAsync();
         var guildId = Context.Guild.Id;
-        var userId = Context.User.Id;
-        var username = Context.User.Username;
+        var isSelf = targetUser == null;
+        var userToCheck = targetUser ?? (SocketGuildUser)Context.User;
 
-        var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == userId);
+
+        var userRecord = await Db.Users.FirstOrDefaultAsync(u => u.DiscordId == userToCheck.Id);
         if (userRecord == null)
         {
-          await FollowupAsync("❌ You don't have a user record yet. Try using `/daily` first.");
+          await FollowupAsync("❌ You don't have a user record yet. Try using `/daily` first.", ephemeral: true);
           return;
         }
 
@@ -51,7 +53,7 @@ namespace FallVerseBotV2.Commands.Economy
 
           var embed = new EmbedBuilder()
               .WithTitle($"💰 {currency.Name} Balance")
-              .WithDescription($"{username}, you currently have **{formatted} {currency.Name}**.")
+              .WithDescription($"{userToCheck.Mention} currently has **{formatted} {currency.Name}**.")
               .WithColor(Color.Teal)
               .WithTimestamp(DateTime.UtcNow)
               .Build();
@@ -68,12 +70,13 @@ namespace FallVerseBotV2.Commands.Economy
 
         if (!balances.Any())
         {
-          await FollowupAsync("ℹ️ You have no currency balances in this server.");
+          await FollowupAsync($"{userToCheck.Mention} has no currency balances in this server.");
+
           return;
         }
 
         var embedAll = new EmbedBuilder()
-            .WithTitle("💼 Your Balances")
+            .WithTitle($"💼 Balance Summary for {userToCheck.Mention}")
             .WithColor(Color.Teal)
             .WithTimestamp(DateTime.UtcNow);
 
@@ -88,7 +91,7 @@ namespace FallVerseBotV2.Commands.Economy
       catch (System.Exception ex)
       {
         Logger.LogError(ex, "Error in BalanceCommand: {Message}", ex.Message);
-        await FollowupAsync("❌ Something went wrong while processing your request.");
+        await FollowupAsync("❌ Something went wrong while processing your request.", ephemeral: true);
         throw; // Rethrow the exception to be handled by the global exception handler
       }
     }
