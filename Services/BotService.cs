@@ -27,6 +27,10 @@ public class DiscordBotService
     _client.MessageReceived += HandleCommandAsync;
     _client.InteractionCreated += HandleInteraction;
     _client.ButtonExecuted += HandleButtonInteraction;
+    _client.UserJoined += OnUserJoinedAsync;
+    _client.GuildAvailable += OnGuildAvailableAsync;
+    _client.JoinedGuild += OnJoinedGuildAsync;
+
 
     // Hook the Ready event to set the playing status
     _client.Ready += OnReadyAsync;
@@ -137,6 +141,78 @@ public class DiscordBotService
     {
       Console.WriteLine($"Error in dynamic button handler: {ex}");
       await component.RespondAsync("❌ Something went wrong with the replay feature.", ephemeral: true);
+    }
+  }
+
+  private async Task OnUserJoinedAsync(SocketGuildUser user)
+  {
+    using var scope = _services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+    var settings = await db.ServerSettings.FindAsync(user.Guild.Id);
+
+    var guildId = user.Guild.Id;
+    var roleIds = settings?.DefaultJoinRoleIds ?? new List<ulong>();
+
+    foreach (var roleId in roleIds)
+    {
+      var role = user.Guild.GetRole(roleId);
+      if (role != null)
+      {
+        await user.AddRoleAsync(role);
+      }
+    }
+
+    // Send welcome message
+    if (!string.IsNullOrWhiteSpace(settings?.WelcomeMessage) && settings.WelcomeChannelId.HasValue)
+    {
+      var channel = user.Guild.GetTextChannel(settings.WelcomeChannelId.Value);
+      if (channel != null)
+      {
+        var formatted = new FormatWelcomeMessage().Format(settings.WelcomeMessage, user);
+        await channel.SendMessageAsync(formatted);
+      }
+    }
+  }
+  private async Task OnGuildAvailableAsync(SocketGuild guild)
+  {
+    await EnsureServerSettingsAsync(guild);
+  }
+
+  private async Task OnJoinedGuildAsync(SocketGuild guild)
+  {
+    await EnsureServerSettingsAsync(guild);
+  }
+
+  private async Task EnsureServerSettingsAsync(SocketGuild guild)
+  {
+    try
+    {
+      using var scope = _services.CreateScope();
+      var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+      var existing = await db.ServerSettings.FindAsync(guild.Id);
+
+      if (existing == null)
+      {
+        db.ServerSettings.Add(new ServerSettings
+        {
+          GuildId = guild.Id,
+          DailyCurrencyId = 1, // Default/fallback
+          DefaultJoinRoleIds = new List<ulong>() // Optional, but for clarity
+        });
+
+        await db.SaveChangesAsync();
+        Console.WriteLine($"✅ Created ServerSettings for guild: {guild.Name} ({guild.Id})");
+      }
+      else
+      {
+        // Optionally update anything if needed
+        Console.WriteLine($"ℹ️ ServerSettings already exists for guild: {guild.Name} ({guild.Id})");
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"❌ Failed to initialize ServerSettings for guild {guild.Name} ({guild.Id}): {ex.Message}");
     }
   }
 

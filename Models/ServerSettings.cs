@@ -13,4 +13,10 @@ public class ServerSettings
 
   public virtual CurrencyType? CasinoCurrency { get; set; }
   public virtual CurrencyType DailyCurrency { get; set; } = null!;
+  public string? WelcomeMessage { get; set; }
+
+  public ulong? WelcomeChannelId { get; set; }
+  [Column(TypeName = "jsonb")]
+  public List<ulong>? DefaultJoinRoleIds { get; set; }
+
 }

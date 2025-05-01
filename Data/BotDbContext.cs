@@ -10,7 +10,7 @@ public class BotDbContext : DbContext
   public DbSet<CurrencyType> CurrencyTypes { get; set; }
   public DbSet<UserCurrencyBalance> CurrencyBalances { get; set; }
   public DbSet<ServerSettings> ServerSettings { get; set; }
-  public DbSet<UserGameStats> UserGameStats { get; set; } = null!;
+  public DbSet<UserGameStats> UserGameStats { get; set; } = null!; 
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -26,15 +26,19 @@ public class BotDbContext : DbContext
     modelBuilder.Entity<UserCurrencyBalance>()
         .HasIndex(e => new { e.UserId, e.CurrencyTypeId })
         .IsUnique();
+
     modelBuilder.Entity<ServerSettings>()
     .HasKey(s => s.GuildId);
 
+    modelBuilder.Entity<ServerSettings>()
+        .Property(s => s.DefaultJoinRoleIds)
+        .HasColumnType("jsonb");
     modelBuilder.Entity<ServerSettings>()
         .HasOne(s => s.DailyCurrency)
         .WithMany()
         .HasForeignKey(s => s.DailyCurrencyId)
         .OnDelete(DeleteBehavior.Restrict);
-        
+
     modelBuilder.Entity<UserGameStats>()
         .Property(e => e.LastGameData)
         .HasColumnType("jsonb")
