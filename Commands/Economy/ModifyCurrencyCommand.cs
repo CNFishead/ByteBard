@@ -59,6 +59,9 @@ namespace FallVerseBotV2.Commands.Economy
           Db.CurrencyBalances.Add(balance);
         }
 
+        // placeholder for the amount before the change
+        var previousAmount = balance.Amount;
+
         // Prevent negative balances
         if (balance.Amount + amount < 0)
         {
@@ -69,16 +72,16 @@ namespace FallVerseBotV2.Commands.Economy
         await Db.SaveChangesAsync();
         var embed = new EmbedBuilder()
             .WithTitle($"💰 {currencyType.Name} Balance Updated")
-            .WithDescription($"{user.Mention} now has **{balance.Amount + amount:N0} {currencyType.Name}**.")
-            .AddField("Previous Amount", $"{balance.Amount:N0} {currencyType.Name}", true)
+            .WithDescription($"{user.Mention} now has **{balance.Amount:N0} {currencyType.Name}**.")
+            .AddField("Previous Amount", $"{previousAmount:N0} {currencyType.Name}", true)
             .AddField("Change Amount", $"{amount:N0} {currencyType.Name}", true)
-            .AddField("Ending Balance", $"{balance.Amount + amount:N0} {currencyType.Name}", true)
+            .AddField("Ending Balance", $"{balance.Amount:N0} {currencyType.Name}", true)
             .WithThumbnailUrl(user.GetAvatarUrl())
             .WithFooter($"Modified by {Context.User.Username}", Context.User.GetAvatarUrl())
             .WithColor(Color.Teal)
             .WithTimestamp(DateTime.UtcNow)
             .Build();
-        await FollowupAsync(embed: embed, ephemeral: true);
+        await FollowupAsync(embed: embed);
         // await FollowupAsync($"✅ {user.Mention} now has {balance.Amount:N0} {currencyType.Name}.");
       }
       catch (System.Exception ex)
