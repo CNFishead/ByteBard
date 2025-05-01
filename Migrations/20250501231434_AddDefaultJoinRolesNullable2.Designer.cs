@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FallVerseBotV2.Migrations
 {
     [DbContext(typeof(BotDbContext))]
-    [Migration("20250501225913_MakeDefaultJoinRolesnullable")]
-    partial class MakeDefaultJoinRolesnullable
+    [Migration("20250501231434_AddDefaultJoinRolesNullable2")]
+    partial class AddDefaultJoinRolesNullable2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
