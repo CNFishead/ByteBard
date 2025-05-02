@@ -14,6 +14,8 @@ public class SetWelcomeMessageHandler
 
   public async Task SetMessage(SocketInteractionContext context, string message)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
     if (settings == null)
     {
@@ -28,11 +30,13 @@ public class SetWelcomeMessageHandler
     settings.WelcomeMessage = message;
     await _db.SaveChangesAsync();
 
-    await context.Interaction.RespondAsync("✅ Welcome message updated.", ephemeral: true);
+    await context.Interaction.FollowupAsync("✅ Welcome message updated.");
   }
 
   public async Task SetChannel(SocketInteractionContext context, ITextChannel channel)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
     if (settings == null)
     {
@@ -47,16 +51,18 @@ public class SetWelcomeMessageHandler
     settings.WelcomeChannelId = channel.Id;
     await _db.SaveChangesAsync();
 
-    await context.Interaction.RespondAsync($"📢 Welcome messages will be sent in {channel.Mention}.", ephemeral: true);
+    await context.Interaction.FollowupAsync($"📢 Welcome messages will be sent in {channel.Mention}.");
   }
 
   public async Task Show(SocketInteractionContext context)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
 
     if (settings == null || (string.IsNullOrWhiteSpace(settings.WelcomeMessage) && !settings.WelcomeChannelId.HasValue))
     {
-      await context.Interaction.RespondAsync("⚠️ No welcome message or channel configured.", ephemeral: true);
+      await context.Interaction.FollowupAsync("⚠️ No welcome message or channel configured.");
       return;
     }
 
@@ -65,6 +71,6 @@ public class SetWelcomeMessageHandler
         ? $"<#{settings.WelcomeChannelId}>"
         : "*No channel set*";
 
-    await context.Interaction.RespondAsync($"👋 **Welcome Settings**\nMessage: `{preview}`\nChannel: {channelMention}", ephemeral: true);
+    await context.Interaction.FollowupAsync($"👋 **Welcome Settings**\nMessage: `{preview}`\nChannel: {channelMention}");
   }
 }

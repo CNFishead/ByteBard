@@ -146,6 +146,7 @@ public class DiscordBotService
 
   private async Task OnUserJoinedAsync(SocketGuildUser user)
   {
+    Console.WriteLine("User joined: " + user.Username);
     using var scope = _services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
     var settings = await db.ServerSettings.FindAsync(user.Guild.Id);

@@ -1,7 +1,5 @@
 using Discord;
 using Discord.Interactions;
-using Microsoft.EntityFrameworkCore;
-
 
 public class SetJoinRoleHandler
 {
@@ -16,51 +14,60 @@ public class SetJoinRoleHandler
 
   public async Task Add(SocketInteractionContext context, IRole role)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
     if (settings == null)
     {
       settings = new ServerSettings
       {
         GuildId = context.Guild.Id,
-        DailyCurrencyId = 1 // fallback, replace with proper default
+        DailyCurrencyId = 1
       };
       _db.ServerSettings.Add(settings);
     }
 
+    settings.DefaultJoinRoleIds ??= new List<ulong>();
+
     if (settings.DefaultJoinRoleIds.Contains(role.Id))
     {
-      await context.Interaction.RespondAsync("⚠️ That role is already assigned to new users.", ephemeral: true);
+      await context.Interaction.FollowupAsync("⚠️ That role is already assigned to new users.");
       return;
     }
 
     settings.DefaultJoinRoleIds.Add(role.Id);
     await _db.SaveChangesAsync();
 
-    await context.Interaction.RespondAsync($"✅ `{role.Name}` will now be auto-assigned to new users.", ephemeral: true);
+    await context.Interaction.FollowupAsync($"✅ `{role.Name}` will now be auto-assigned to new users.");
   }
 
   public async Task Remove(SocketInteractionContext context, IRole role)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
-    if (settings == null || !settings.DefaultJoinRoleIds.Contains(role.Id))
+
+    if (settings?.DefaultJoinRoleIds == null || !settings.DefaultJoinRoleIds.Contains(role.Id))
     {
-      await context.Interaction.RespondAsync("⚠️ That role isn’t currently set as a default join role.", ephemeral: true);
+      await context.Interaction.FollowupAsync("⚠️ That role isn’t currently set as a default join role.");
       return;
     }
 
     settings.DefaultJoinRoleIds.Remove(role.Id);
     await _db.SaveChangesAsync();
 
-    await context.Interaction.RespondAsync($"🗑️ `{role.Name}` removed from default join roles.", ephemeral: true);
+    await context.Interaction.FollowupAsync($"🗑️ `{role.Name}` removed from default join roles.");
   }
 
   public async Task List(SocketInteractionContext context)
   {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
     var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
 
-    if (settings == null || settings.DefaultJoinRoleIds.Count == 0)
+    if (settings?.DefaultJoinRoleIds == null || settings.DefaultJoinRoleIds.Count == 0)
     {
-      await context.Interaction.RespondAsync("📭 No default join roles set.", ephemeral: true);
+      await context.Interaction.FollowupAsync("📭 No default join roles set.");
       return;
     }
 
@@ -69,7 +76,6 @@ public class SetJoinRoleHandler
         .Where(r => r != null)
         .Select(r => r!.Mention);
 
-    await context.Interaction.RespondAsync("📌 Default join roles:\n" + string.Join("\n", mentions), ephemeral: true);
+    await context.Interaction.FollowupAsync("📌 Default join roles:\n" + string.Join("\n", mentions));
   }
-
 }

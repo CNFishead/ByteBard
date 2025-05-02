@@ -12,7 +12,8 @@ public class BotModule : IBaseModule
         {
             GatewayIntents = GatewayIntents.Guilds |
                              GatewayIntents.GuildMessages |
-                             GatewayIntents.MessageContent
+                             GatewayIntents.MessageContent |
+                             GatewayIntents.GuildMembers
         };
 
         // Register the DiscordSocketClient with custom config
