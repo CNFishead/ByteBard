@@ -82,6 +82,22 @@ public class DiscordBotService
   }
   private async Task OnReadyAsync()
   {
+    var statusMessages = new[]
+    {
+        "tales of code and coin",
+        "a ballad of bits and bytes",
+        "composing slash commands",
+        "singing for silver and souls",
+        "rolling dice and stealing hearts",
+        "collecting stories across the servers",
+        "howling for loot under the binary moon",
+        "jamming with JSON and jazz",
+        "writing code in common tongue",
+        "Wulf's echo in digital song"
+    };
+    var random = new Random();
+    var chosen = statusMessages[random.Next(statusMessages.Length)];
+    await _client.SetGameAsync(chosen, type: ActivityType.Playing);
     // Option A: Register commands to a single guild for *faster updates* (guild commands update instantly)
     // ulong guildId = 669684447704121374; // Replace with your test guild ID
     // await _interactionService.RegisterCommandsToGuildAsync(guildId, true);
@@ -89,6 +105,7 @@ public class DiscordBotService
 
     // Option B (comment out if using Option A): Register globally (takes up to an hour to update)
     await _interactionService.RegisterCommandsGloballyAsync(true);
+    Console.WriteLine($"🎵 ByteBard is now playing: {chosen}");
   }
   private async Task HandleInteraction(SocketInteraction arg)
   {

@@ -28,7 +28,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
 
             var expressions = message.Split(';', StringSplitOptions.RemoveEmptyEntries);
             var response = new StringBuilder();
-            response.AppendLine("🎯 Roll Results!\n");
+            response.AppendLine("🎯 Roll Results!");
 
             foreach (var rawExpr in expressions)
             {
