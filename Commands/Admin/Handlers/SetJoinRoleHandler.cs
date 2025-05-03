@@ -36,7 +36,9 @@ public class SetJoinRoleHandler
     }
 
     settings.DefaultJoinRoleIds.Add(role.Id);
+    _db.Entry(settings).Property(s => s.DefaultJoinRoleIds).IsModified = true;
     await _db.SaveChangesAsync();
+
 
     await context.Interaction.FollowupAsync($"✅ `{role.Name}` will now be auto-assigned to new users.");
   }
@@ -54,7 +56,9 @@ public class SetJoinRoleHandler
     }
 
     settings.DefaultJoinRoleIds.Remove(role.Id);
+    _db.Entry(settings).Property(s => s.DefaultJoinRoleIds).IsModified = true;
     await _db.SaveChangesAsync();
+
 
     await context.Interaction.FollowupAsync($"🗑️ `{role.Name}` removed from default join roles.");
   }
