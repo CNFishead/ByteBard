@@ -30,8 +30,8 @@ public class AdminModule : BaseAdminModule
   [SlashCommand("list-join-roles", "List all default roles given to users on join.")]
   public async Task ListJoinRoles() => await _setJoinRoleHandler.List(Context);
 
-  // ─────────── Welcome Message Commands ───────────
 
+  // ─────────── Welcome Message Commands ───────────
   [SlashCommand("set-welcome-message", "Set the welcome message template shown when users join.")]
   public async Task SetWelcomeMessage(string message) => await _welcomeHandler.SetMessage(Context, message);
 
@@ -40,4 +40,7 @@ public class AdminModule : BaseAdminModule
 
   [SlashCommand("show-welcome-settings", "Show the current welcome message & channel settings.")]
   public async Task ShowWelcomeSettings() => await _welcomeHandler.Show(Context);
+
+  [SlashCommand("set-manual-hello", "Sets the message used by the /welcome command.")]
+  public async Task SetManualWelcomeMessage(string message) => await _welcomeHandler.SetManualMessage(Context, message);
 }

@@ -18,5 +18,6 @@ public class ServerSettings
   public ulong? WelcomeChannelId { get; set; }
   [Column(TypeName = "jsonb")]
   public List<ulong>? DefaultJoinRoleIds { get; set; }
+  public string? ManualWelcomeMessage { get; set; }
 
 }

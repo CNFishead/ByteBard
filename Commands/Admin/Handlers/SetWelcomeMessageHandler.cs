@@ -73,4 +73,25 @@ public class SetWelcomeMessageHandler
 
     await context.Interaction.FollowupAsync($"👋 **Welcome Settings**\nMessage: `{preview}`\nChannel: {channelMention}");
   }
+  public async Task SetManualMessage(SocketInteractionContext context, string message)
+  {
+    await context.Interaction.DeferAsync(ephemeral: true);
+
+    var settings = await _db.ServerSettings.FindAsync(context.Guild.Id);
+    if (settings == null)
+    {
+      settings = new ServerSettings
+      {
+        GuildId = context.Guild.Id,
+        DailyCurrencyId = 1
+      };
+      _db.ServerSettings.Add(settings);
+    }
+
+    settings.ManualWelcomeMessage = message;
+    await _db.SaveChangesAsync();
+
+    await context.Interaction.FollowupAsync("✅ Manual welcome message updated.", ephemeral: true);
+  }
+
 }

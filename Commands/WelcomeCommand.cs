@@ -1,81 +1,43 @@
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using System.Text;
 using System.Threading.Tasks;
 
 public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger _logger;
+    private readonly BotDbContext _db;
 
-    public WelcomeModule(ILogger<WelcomeModule> logger)
+    public WelcomeModule(ILogger<WelcomeModule> logger, BotDbContext db)
     {
         _logger = logger;
-        _logger.LogInformation("WelcomeModule constructed");
+        _db = db;
     }
 
-    [SlashCommand("welcome", "Welcome a new user to the server")]
-    public async Task WelcomeUser(
-        [Summary("user", "The user to welcome")] IUser user)
+    [SlashCommand("welcome", "Manually welcome a user using the server's custom message")]
+    public async Task WelcomeUser([Summary("user", "The user to welcome")] SocketGuildUser user)
     {
-        await DeferAsync();
-        try
+        await DeferAsync(); // Optionally use ephemeral: false if you want visible follow-up
+
+        var guild = Context.Guild;
+        if (guild == null)
         {
-            _logger.LogInformation("WelcomeUser fired.");
-
-            // Static channel/role/user IDs (replace these with actual IDs)
-            const ulong AboutUsChannelId = 1134609148487675914;
-            const ulong SettingsChannelId = 1299898223762083891;
-            const ulong WorldMasterRoleId = 1137078504085803179;
-            const ulong MephistophalesId = 236633193128787968;
-            const ulong NovaId = 479121165609074689;
-            const ulong SeraId = 455143115439734784;
-            const ulong CnfishId = 669683901513334834;
-            const ulong SkyeId = 290651318262169600;
-
-            // Fetch guild, channels, roles, and users dynamically
-            var guild = Context.Guild;
-            if (guild == null)
-            {
-                await FollowupAsync("This command must be run in a server.");
-                return;
-            }
-
-            var aboutUsChannel = guild.GetTextChannel(AboutUsChannelId);
-            var settingsChannel = guild.GetTextChannel(SettingsChannelId);
-            var worldMasterRole = guild.GetRole(WorldMasterRoleId);
-            // Fetch all users in the guild
-            var users = await guild.GetUsersAsync().FlattenAsync();
-            // Find specific users
-            var mephistophales = users.FirstOrDefault(u => u.Id == MephistophalesId);
-            var novaId = users.FirstOrDefault(u => u.Id == NovaId);
-            var seraId = users.FirstOrDefault(u => u.Id == SeraId);
-            var cnfishId = users.FirstOrDefault(u => u.Id == CnfishId);
-            var skyeId = users.FirstOrDefault(u => u.Id == SkyeId);
-
-            _logger.LogInformation($"Fetched guild, channels, roles, and users.");
-
-            // Build the response dynamically with null checks
-            var responseBuilder = new StringBuilder();
-            responseBuilder.AppendLine($"Welcome, {user.Mention}! We're glad you're here.");
-            responseBuilder.AppendLine($"Take a look around the {(aboutUsChannel != null ? aboutUsChannel.Mention : "#about-us")} channel, and check out {(settingsChannel != null ? settingsChannel.Mention : "#fallverse-settings")} to get started.");
-
-            responseBuilder.AppendLine($"If you have any questions, please reach out to a {(worldMasterRole != null ? worldMasterRole.Mention : "@World Master")} such as " +
-                $"{(mephistophales != null ? mephistophales.Mention : "@Mephistophales")}, " +
-                $"{(novaId != null ? novaId.Mention : "@Nova")}, " +
-                $"{(seraId != null ? seraId.Mention : "@Sera")}, " +
-                $"{(skyeId != null ? skyeId.Mention : "@Skye")}, or " +
-                $"{(cnfishId != null ? cnfishId.Mention : "@Cnfish")}.");
-
-            _logger.LogInformation($"Response built.");
-
-            // Send the response
-            await FollowupAsync(responseBuilder.ToString());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in WelcomeUser");
-            await FollowupAsync("An error occurred while welcoming the user.");
+            await FollowupAsync("⚠️ This command must be run in a server.");
+            return;
         }
 
+        var settings = await _db.ServerSettings.FindAsync(guild.Id);
+        if (settings == null || string.IsNullOrWhiteSpace(settings.ManualWelcomeMessage))
+        {
+            await FollowupAsync("⚠️ No manual welcome message has been configured for this server.");
+            return;
+        }
+
+        var formattedMessage = new FormatWelcomeMessage().Format(settings.ManualWelcomeMessage, user);
+
+        // Send the message to the channel where the command was invoked
+        await FollowupAsync(formattedMessage); // Public by default unless otherwise specified
     }
+   
 }

@@ -10,14 +10,16 @@ public class DiscordBotService
   private readonly CommandService _commands;
   private readonly IServiceProvider _services;
   private readonly InteractionService _interactionService;
+  private readonly ILogger _logger;
 
   public DiscordBotService(DiscordSocketClient client, CommandService commands, IServiceProvider services,
-        InteractionService interactionService)
+        InteractionService interactionService, ILogger<DiscordBotService> logger)
   {
     _client = client;
     _commands = commands;
     _services = services;
     _interactionService = interactionService;
+    _logger = logger;
   }
 
   public async Task StartAsync()
@@ -43,20 +45,21 @@ public class DiscordBotService
 
     // Connect the Discord client
     var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
+
     await _client.LoginAsync(TokenType.Bot, token);
     await _client.StartAsync();
   }
 
   private async Task HandleCommandAsync(SocketMessage msg)
   {
-    Console.WriteLine("HandleCommandAsync fired.");
+    _logger.LogInformation("HandleCommandAsync fired.");
 
     // Don’t process system or bot messages
-    if (!(msg is SocketUserMessage message)) { Console.WriteLine("System/bot message"); return; }
+    if (!(msg is SocketUserMessage message)) { _logger.LogInformation("System/bot message"); return; }
     ;
     if (message.Author.IsBot) return;
 
-    Console.WriteLine($"Message content: {message.Content}");
+    _logger.LogInformation($"Message content: {message.Content}");
     // Mark where the prefix ends and the command begins
     int argPos = 0;
     // For example, we’ll use '!' as the prefix
@@ -64,7 +67,7 @@ public class DiscordBotService
           message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
       return;
 
-    Console.WriteLine("Prefix recognized. Attempting to execute command.");
+    _logger.LogInformation("Prefix recognized. Attempting to execute command.");
 
     // Create a Command Context
     var context = new SocketCommandContext(_client, message);
@@ -72,16 +75,29 @@ public class DiscordBotService
     // Execute the command
     var result = await _commands.ExecuteAsync(context, argPos, _services);
 
-    Console.WriteLine($"Command result: {result.IsSuccess}, {result.ErrorReason}");
+    _logger.LogInformation($"Command result: {result.IsSuccess}, {result.ErrorReason}");
 
     if (!result.IsSuccess)
     {
       // Optional: handle command errors, log them, etc.
-      Console.WriteLine($"Command Error: {result.ErrorReason}");
+      _logger.LogError($"Command Error: {result.ErrorReason}");
     }
   }
   private async Task OnReadyAsync()
   {
+    _logger.LogInformation("🟢 OnReadyAsync fired.");
+
+
+    var validator = new SlashCommandValidator();
+    validator.ValidateCommands(_interactionService);
+
+    // Option A: Register commands to a single guild for *faster updates* (guild commands update instantly)
+    // ulong guildId = 669684447704121374; // Replace with your test guild ID
+    // await _interactionService.RegisterCommandsToGuildAsync(guildId, true);
+
+    // Option B (comment out if using Option A): Register globally (takes up to an hour to update)
+    await _interactionService.RegisterCommandsGloballyAsync(true);
+
     var statusMessages = new[]
     {
         "tales of code and coin",
@@ -98,14 +114,9 @@ public class DiscordBotService
     var random = new Random();
     var chosen = statusMessages[random.Next(statusMessages.Length)];
     await _client.SetGameAsync(chosen, type: ActivityType.Playing);
-    // Option A: Register commands to a single guild for *faster updates* (guild commands update instantly)
-    // ulong guildId = 669684447704121374; // Replace with your test guild ID
-    // await _interactionService.RegisterCommandsToGuildAsync(guildId, true);
 
+    _logger.LogInformation($"🎵 ByteBard is now playing: {chosen}");
 
-    // Option B (comment out if using Option A): Register globally (takes up to an hour to update)
-    await _interactionService.RegisterCommandsGloballyAsync(true);
-    Console.WriteLine($"🎵 ByteBard is now playing: {chosen}");
   }
   private async Task HandleInteraction(SocketInteraction arg)
   {
@@ -119,8 +130,7 @@ public class DiscordBotService
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Error handling interaction: {ex}");
-      // Handle errors
+      _logger.LogError($"Error handling interaction: {ex}");
     }
   }
 
@@ -156,14 +166,14 @@ public class DiscordBotService
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Error in dynamic button handler: {ex}");
+      _logger.LogError($"Error in dynamic button handler: {ex}");
       await component.RespondAsync("❌ Something went wrong with the replay feature.", ephemeral: true);
     }
   }
 
   private async Task OnUserJoinedAsync(SocketGuildUser user)
   {
-    Console.WriteLine("User joined: " + user.Username);
+    _logger.LogInformation("User joined: " + user.Username);
     using var scope = _services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
     var settings = await db.ServerSettings.FindAsync(user.Guild.Id);
@@ -220,17 +230,17 @@ public class DiscordBotService
         });
 
         await db.SaveChangesAsync();
-        Console.WriteLine($"✅ Created ServerSettings for guild: {guild.Name} ({guild.Id})");
+        _logger.LogInformation($"✅ — Created ServerSettings for guild: {guild.Name} ({guild.Id})");
       }
       else
       {
         // Optionally update anything if needed
-        Console.WriteLine($"ℹ️ ServerSettings already exists for guild: {guild.Name} ({guild.Id})");
+        _logger.LogInformation($"ℹ️ — ServerSettings already exists for guild: {guild.Name} ({guild.Id})");
       }
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"❌ Failed to initialize ServerSettings for guild {guild.Name} ({guild.Id}): {ex.Message}");
+      _logger.LogError($"❌ — Failed to initialize ServerSettings for guild {guild.Name} ({guild.Id}): {ex.Message}");
     }
   }
 
