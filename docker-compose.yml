@@ -5,7 +5,7 @@ services:
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - RANDOM_ORG_API_KEY=${RANDOM_ORG_API_KEY}
-      - ConnectionStrings__DefaultConnection=Server=${PG_HOST};Port=${PG_PORT};Username=${PG_USER};Password=${SUPABASE_DB_PW};Database=${PG_NAME}
+      - ConnectionStrings__DefaultConnection=Server=db.qnkpbcxmmbdbhsldvvzc.supabase.co;Port=5432;Username=postgres;Password=${SUPABASE_DB_PW};Database=postgres;
 
 
     # depends_on:
