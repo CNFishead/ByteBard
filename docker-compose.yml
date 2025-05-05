@@ -5,21 +5,23 @@ services:
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - RANDOM_ORG_API_KEY=${RANDOM_ORG_API_KEY}
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=botdb;Username=postgres;Password=postgres
-    depends_on:
-      - db
+      - ConnectionStrings__DefaultConnection=Server=aws-0-us-east-2.pooler.supabase.com;Port=5432;Username=postgres.qnkpbcxmmbdbhsldvvzc;Password=HCpPyakRRpIIanCm;Database=postgres;
+
+
+    # depends_on:
+      # - db
     restart: unless-stopped
-  db:
-    image: postgres
-    restart: always
-    environment:
-      POSTGRES_DB: botdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+  # db:
+  #   image: postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: botdb
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
 
 volumes:
   pgdata:

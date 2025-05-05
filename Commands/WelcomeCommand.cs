@@ -34,10 +34,10 @@ public class WelcomeModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var formattedMessage = new FormatWelcomeMessage().Format(settings.ManualWelcomeMessage, user);
+        var formattedMessage = new FormatWelcomeMessage().Format(settings.ManualWelcomeMessage, user, Context.User);
 
         // Send the message to the channel where the command was invoked
         await FollowupAsync(formattedMessage); // Public by default unless otherwise specified
     }
-   
+
 }

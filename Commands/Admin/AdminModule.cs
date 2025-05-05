@@ -41,6 +41,6 @@ public class AdminModule : BaseAdminModule
   [SlashCommand("show-welcome-settings", "Show the current welcome message & channel settings.")]
   public async Task ShowWelcomeSettings() => await _welcomeHandler.Show(Context);
 
-  [SlashCommand("set-manual-hello", "Sets the message used by the /welcome command.")]
+  [SlashCommand("set-manual-hello", "Sets the message used by the welcome command.")]
   public async Task SetManualWelcomeMessage(string message) => await _welcomeHandler.SetManualMessage(Context, message);
 }
