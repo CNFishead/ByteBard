@@ -8,6 +8,9 @@ public class GameHandlerRegistry : IGameHandlerRegistry
 
     public GameHandlerRegistry(IEnumerable<IGameHandler> handlers)
     {
+        foreach (var h in handlers)
+            Console.WriteLine($"🔎 Registered handler: {h.GameKey} ({h.GetType().Name})");
+
         _handlers = handlers.ToDictionary(h => h.GameKey);
     }
 

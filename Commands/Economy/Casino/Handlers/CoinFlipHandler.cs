@@ -9,7 +9,7 @@ public class CoinFlipHandler : IGameHandler
   private readonly ILogger<CoinFlipHandler> _logger;
   private readonly BotDbContext _db;
   public string GameKey => "coinflip";
-
+  
   public CoinFlipHandler(ILogger<CoinFlipHandler> logger, BotDbContext db)
   {
     _logger = logger;

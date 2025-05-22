@@ -41,7 +41,7 @@ public class BotModule : IBaseModule
 
         // Register game handlers and registry
         services.AddScoped<IGameHandler, DiceDuelHandler>(); // Add other handlers similarly
-
+        services.AddScoped<IGameHandler, CoinFlipHandler>();
         services.AddScoped<IGameHandlerRegistry, GameHandlerRegistry>();
     }
 }
