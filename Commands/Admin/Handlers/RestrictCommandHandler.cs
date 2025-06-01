@@ -13,7 +13,7 @@ public class RestrictCommandHandler
     _db = db;
   }
   [DefaultMemberPermissions(GuildPermission.Administrator)]
-  public async Task Restrict(SocketInteractionContext context, string commandName, params IRole[] roles)
+  public async Task Restrict(SocketInteractionContext context, string commandName, List<IRole> roles)
   {
     if (!IsAdmin(context))
     {

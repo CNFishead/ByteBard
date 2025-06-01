@@ -49,9 +49,9 @@ public class AdminModule : BaseAdminModule
 
   // ─────────── Misc Admin Commands ───────────
   [SlashCommand("restrict-command", "Restrict a slash command to one or more roles.")]
-  public async Task RestrictCommand(string commandName, params IRole[] roles)
+  public async Task RestrictCommand(string commandName, List<IRole> roles)
     => await _restrictHandler.Restrict(Context, commandName.ToLowerInvariant(), roles);
-    
+
   [SlashCommand("unrestrict-command", "Remove a role restriction from a command.")]
   public async Task UnrestrictCommand(string commandName, IRole role)
       => await _restrictHandler.Unrestrict(Context, commandName.ToLowerInvariant(), role);
