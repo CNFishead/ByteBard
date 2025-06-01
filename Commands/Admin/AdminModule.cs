@@ -48,9 +48,9 @@ public class AdminModule : BaseAdminModule
   public async Task SetManualWelcomeMessage(string message) => await _welcomeHandler.SetManualMessage(Context, message);
 
   // ─────────── Misc Admin Commands ───────────
-  [SlashCommand("restrict-command", "Restrict a slash command to one or more roles.")]
-  public async Task RestrictCommand(string commandName, List<IRole> roles)
-    => await _restrictHandler.Restrict(Context, commandName.ToLowerInvariant(), roles);
+  [SlashCommand("restrict-command", "Restrict a slash command to a specific role.")]
+  public async Task RestrictCommand(string commandName, IRole role)
+    => await _restrictHandler.Restrict(Context, commandName.ToLowerInvariant(), role);
 
   [SlashCommand("unrestrict-command", "Remove a role restriction from a command.")]
   public async Task UnrestrictCommand(string commandName, IRole role)
