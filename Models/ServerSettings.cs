@@ -19,5 +19,6 @@ public class ServerSettings
   [Column(TypeName = "jsonb")]
   public List<ulong>? DefaultJoinRoleIds { get; set; }
   public string? ManualWelcomeMessage { get; set; }
-
+  [Column(TypeName = "jsonb")]
+  public Dictionary<string, List<ulong>>? RestrictedCommands { get; set; } = new();
 }

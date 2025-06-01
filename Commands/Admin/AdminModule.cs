@@ -14,12 +14,15 @@ public class AdminModule : BaseAdminModule
     //register handlers here
     _setJoinRoleHandler = new SetJoinRoleHandler(loggerFactory.CreateLogger<SetJoinRoleHandler>(), db);
     _welcomeHandler = new SetWelcomeMessageHandler(loggerFactory.CreateLogger<SetWelcomeMessageHandler>(), db);
+    _restrictHandler = new RestrictCommandHandler(loggerFactory.CreateLogger<RestrictCommandHandler>(), db);
 
   }
 
   //instantiate modules here
   private readonly SetJoinRoleHandler _setJoinRoleHandler;
   private readonly SetWelcomeMessageHandler _welcomeHandler;
+  private readonly RestrictCommandHandler _restrictHandler;
+
 
   [SlashCommand("add-join-role", "Set a role to be given to new users when they join.")]
   public async Task AddJoinRole(IRole role) => await _setJoinRoleHandler.Add(Context, role);
@@ -43,4 +46,18 @@ public class AdminModule : BaseAdminModule
 
   [SlashCommand("set-manual-hello", "Sets the message used by the welcome command.")]
   public async Task SetManualWelcomeMessage(string message) => await _welcomeHandler.SetManualMessage(Context, message);
+
+  // ─────────── Misc Admin Commands ───────────
+  [SlashCommand("restrict-command", "Restrict a slash command to one or more roles.")]
+  public async Task RestrictCommand(string commandName, params IRole[] roles)
+    => await _restrictHandler.Restrict(Context, commandName.ToLowerInvariant(), roles);
+    
+  [SlashCommand("unrestrict-command", "Remove a role restriction from a command.")]
+  public async Task UnrestrictCommand(string commandName, IRole role)
+      => await _restrictHandler.Unrestrict(Context, commandName.ToLowerInvariant(), role);
+
+  [SlashCommand("list-restrictions", "Show which commands are currently role-restricted.")]
+  public async Task ListCommandRestrictions()
+      => await _restrictHandler.List(Context);
+
 }

@@ -124,7 +124,9 @@ public class DiscordBotService
     {
       // Create an execution context that matches the slash command
       var ctx = new SocketInteractionContext(_client, arg);
-
+      // Run permission check middleware
+      bool allowed = await CommandPermissionMiddleware.CheckPermissionsAsync(ctx, _services);
+      if (!allowed) return;
       // Execute the interaction command
       await _interactionService.ExecuteCommandAsync(ctx, _services);
     }
