@@ -1,139 +1,123 @@
-# 💸 Economy Bot Commands - README
+# 🎵 ByteBard Discord Bot
 
-This document outlines the full set of modular, per-server scoped economy commands for your Discord bot.
-Each command is separated into its own file, grouped under `economy`, and supports a unique in-server economy system.
-
----
-
-## 🔧 Setup Summary
-
-- Each command resides in a separate class inheriting from `BaseEconomyModule`
-- Database access is injected through `BotDbContext`
-- Each command is registered under the command group: `/economy`
-- All commands are **guild-scoped**, meaning balances and currencies are isolated per server
+**ByteBard** is a modular, extensible Discord bot designed to bring RPG flair, economy systems, interactive games, and more to any server it joins. Built using C# with Discord.Net and Entity Framework Core, ByteBard weaves code with character—bringing useful functionality wrapped in whimsical theming.
 
 ---
 
-## 📜 Command List
+## 🗂️ Table of Contents
 
-### `/daily`
-
-> Claim your daily reward.
-
-- Tied to the configured daily currency for the server
-- Tracks streaks and gives randomized rewards
-- Reward amount scales with streak length
-
----
-
-### `/modifycurrency <@user> <currency> <amount>`
-
-> Admin command to adjust a user's balance
-
-- Positive values add
-- Negative values subtract (but cannot drop below zero)
-- Balance is updated only for the current server
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Architecture](#architecture)
+- [Commands](docs/commands.md)
+- [Game Handlers](docs/game-handlers.md)
+- [Economy System](docs/economy.md)
+- [Database Schema](docs/database.md)
+- [Server Settings](docs/server-settings.md)
+- [Welcome and Join Roles](docs/welcome.md)
+- [Deployment](docs/deployment.md)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-### `/listcurrencies`
+## ✨ Features
 
-> View all currencies created for this server
-
-- Shows currencies in an embed layout
-- Only shows currencies tied to the server the command is used in
-
----
-
-### `/balance <currency>`
-
-> Check your balance for a specific currency
-
-- Only shows your balance for the current server
-- Shows a value even if your balance is zero
+- Slash and prefix command support
+- Extensible game system (casino-style games, etc.)
+- Modular user economy with multiple currencies
+- Server-specific configuration (roles, welcome messages)
+- Dynamic status messages with thematic flavor
+- Button interaction and replay handling
 
 ---
 
-### `/transfercurrency <@user> <currency> <amount>`
+## 🚀 Getting Started
 
-> Send currency to another user
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/yourusername/bytebard.git
+   cd bytebard
+   Set your environment variables:
+   ```
 
-- Sender must have enough funds
-- Recipient receives a DM notification (if possible)
-- Transactions are per-server and cannot be cross-server
+2. Set Enviornment Variables
+    ```env
+    DISCORD_BOT_TOKEN – Your bot's token
+    DATABASE_URL – Your PostgreSQL connection string
+    ```
 
----
+3. Run migrations and start the bot:
+    ```bash
+    dotnet ef database update
+    dotnet run
+    ```
 
-### `/addcurrencytype <name>`
+## 🧠 Architecture
+The core bot logic lives in BotService.cs and manages the lifecycle of Discord interactions.
 
-> Create a new currency for your server
+Key components:
+- Commands: Handled via CommandService for legacy prefix commands
+- Interactions: Slash commands and buttons handled via InteractionService
+- Database: BotDbContext.cs defines and configures all EF Core entities
+- Handlers: Game-specific logic is injected via IGameHandlerRegistry
 
-- Currency is only visible and usable in the current server
-- Prevents duplicate currency names within the same server
 
----
+## 🤖 Commands
+Slash and prefix commands are modularized for easy extension. Commands include:
+- `/daily`
+- `/balance`
+- `/casino flip`
+- `!ping`, etc.
 
-### `/setdailycurrency <currency>`
+📄 See full command reference in [Commands]('./Docs/Commands.md)
 
-> Set which currency `/daily` rewards in this server
+## 🎰 Game Handlers
+Game logic is abstracted behind a registry interface, allowing you to plug in new games like slots, blackjack, etc., using the same interaction pipeline.
 
-- Currency must already exist in the server
-- Updates the server's `ServerSettings` record
+📄 Details in [Game Handlers](docs/game-handlers.md)
 
----
+## 💰 Economy System
+ByteBard supports:
+- Multiple currency types
+- Daily rewards
+- User-specific balances
+- Game-based wins/losses
 
-# Welcome Message Formatting Guide
+📄 Read more in [Economy](docs/economy.md)
 
-You can customize your **automated** and **manual welcome messages** using special placeholder tokens. These will be replaced with real user info when the message is sent.
+## 🛠️ Database Schema
+Built with EF Core + PostgreSQL. Includes:
+- UserRecord
+- UserEconomy
+- CurrencyType
+- ServerSettings
+- UserGameStats
 
----
+📄 See [Database](docs/database.md)
 
-## ✨ Supported Placeholders
+## 🏰 Server Settings
+Each guild can:
+- Define default join roles
+- Set welcome messages and channels
+- Choose daily currency type (This allows some kind of daily interaction in the server)
 
-| Placeholder       | Replaced With                                         |
-| ----------------- | ----------------------------------------------------- |
-| `{user}`          | Mention of the user being welcomed (e.g., `@NewUser`) |
-| `{username}`      | Username of the user being welcomed                   |
-| `{tag}`           | Full Discord tag of the user (e.g., `NewUser#1234`)   |
-| `{requester}`     | Mention of the user who ran the `/welcome` command    |
-| `{requestername}` | Username of the requester                             |
-| `{requestertag}`  | Full Discord tag of the requester                     |
+📄 See [Server Settings](docs/server-settings.md)
 
----
+## 🎉 Welcome System
+New users can:
+- Receive default roles automatically
+- See a custom welcome message in a configured channel
 
-## 🔤 Special Characters
+📄 Setup instructions in [Welcome Documentation](./Docs/WelcomeDocumentation.md)
 
-- To insert a **new line**, use `\\n`  
-  Example:  
-   `Welcome {user}!\nWe're so glad to have you here!`
+## 🛳️ Deployment
+Supports local development and cloud-hosted deployment (e.g., Docker + Supabase PostgreSQL).
 
----
+📄 See [Deployment](docs/deployment.md)
 
-## 🧪 Example Message
-
-Input:
-`📣 Message from {requester}:\nWelcome {user} to the server!\nPlease check out the #rules channel.`
-
-Output (if requested by `@AdminUser` for `@NewUser`):
-
-```
-📣 Message from @AdminUser:
-Welcome @NewUser to the server!
-Please check out the #rules channel.
-```
-
----
-
-## 🛠 Best Practices
-
-- Keep the message friendly, short, and clear.
-- Use `\\n` to break up longer blocks into paragraphs.
-- Use `{user}` and `{requester}` to make the message feel more personal.
-- Avoid ping spam or long inline formatting (no Discord markdown like `**bold**` or `__underline__` unless intended).
-
----
-
-## 📌 Notes
-
-- If `{requester}` is used in the **automated welcome message**, it will default to `System`.
-- If a placeholder is not recognized, it will be left unchanged in the output.
+## 🤝 Contributing
+Pull requests are welcome! If you're adding a new command, game, or feature:
+- Create a new modular class in Modules/
+- Follow the architecture and functional style
+- Document your command in docs/commands.md
