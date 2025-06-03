@@ -3,11 +3,11 @@ using Discord.Interactions;
 using FallVerseBotV2.Commands.Admin;
 
 [Group("admin", "admin-related commands that help facilitate the bots usuage on the server")]
-public class AdminModule : BaseAdminModule
+public class AdminModule : BaseGroupModule
 {
   private readonly ILoggerFactory _loggerFactory;
 
-  public AdminModule(ILogger<BaseAdminModule> logger, ILoggerFactory loggerFactory, BotDbContext db)
+  public AdminModule(ILogger<BaseGroupModule> logger, ILoggerFactory loggerFactory, BotDbContext db)
       : base(logger, db)
   {
     _loggerFactory = loggerFactory;

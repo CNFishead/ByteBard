@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FallVerseBotV2.Migrations
 {
     [DbContext(typeof(BotDbContext))]
-    partial class BotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602184022_CombatTracking")]
+    partial class CombatTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,9 +43,6 @@ namespace FallVerseBotV2.Migrations
                     b.Property<decimal>("CreatedByUserId")
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<int>("CurrentRound")
-                        .HasColumnType("integer");
-
                     b.Property<int>("CurrentTurnIndex")
                         .HasColumnType("integer");
 
@@ -55,10 +55,6 @@ namespace FallVerseBotV2.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.PrimitiveCollection<List<int>>("TurnQueue")
-                        .IsRequired()
-                        .HasColumnType("integer[]");
 
                     b.HasKey("Id");
 

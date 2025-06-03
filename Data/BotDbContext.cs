@@ -10,7 +10,10 @@ public class BotDbContext : DbContext
   public DbSet<CurrencyType> CurrencyTypes { get; set; }
   public DbSet<UserCurrencyBalance> CurrencyBalances { get; set; }
   public DbSet<ServerSettings> ServerSettings { get; set; }
-  public DbSet<UserGameStats> UserGameStats { get; set; } = null!; 
+  public DbSet<UserGameStats> UserGameStats { get; set; } = null!; public DbSet<CombatTracker> CombatTrackers { get; set; }
+  public DbSet<Combatant> Combatants { get; set; }
+
+
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -43,6 +46,15 @@ public class BotDbContext : DbContext
         .Property(e => e.LastGameData)
         .HasColumnType("jsonb")
         .HasDefaultValueSql("'{}'::jsonb");
+    
+    modelBuilder.Entity<CombatTracker>()
+        .HasIndex(t => new
+        {
+          t.GuildId,
+          t.ChannelId,
+          t.GameId
+        })
+        .IsUnique();
 
     // Force all DateTime values to UTC
     foreach (var entity in modelBuilder.Model.GetEntityTypes())
