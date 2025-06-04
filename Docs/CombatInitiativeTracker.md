@@ -92,3 +92,7 @@ Removes a combatant by name.
 - Each channel can have multiple trackers (if they use unique gameIds).
 - Combatants are tied to the user who added them (used for mention logic).
 - Turn queue is round-based and regenerates each round.
+
+### Tracker Expiration
+- Each tracker stores a `LastUpdatedAt` timestamp.
+- Trackers are automatically removed by the database if they haven't been updated for **7 days**.

@@ -9,6 +9,7 @@ public class CombatTracker
     public bool IsActive { get; set; } = false;
     public int CurrentTurnIndex { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Combatant> Combatants { get; set; } = new();
     public List<int> TurnQueue { get; set; } = new(); // Combatant IDs
