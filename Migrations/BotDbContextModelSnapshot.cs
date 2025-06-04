@@ -46,9 +46,6 @@ namespace FallVerseBotV2.Migrations
                     b.Property<int>("CurrentTurnIndex")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("GameId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -59,16 +56,19 @@ namespace FallVerseBotV2.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.PrimitiveCollection<List<int>>("TurnQueue")
                         .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LastUpdatedAt");
+
                     b.HasIndex("GuildId", "ChannelId", "GameId")
                         .IsUnique();
-
-                    b.HasIndex("LastUpdatedAt");
 
                     b.ToTable("CombatTrackers");
                 });

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FallVerseBotV2.Migrations
 {
     [DbContext(typeof(BotDbContext))]
-    [Migration("20250605235900_CombatTrackerTTL")]
-    partial class CombatTrackerTTL
+    [Migration("20250604223627_LastUpdatedFieldCombat")]
+    partial class LastUpdatedFieldCombat
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,9 +49,6 @@ namespace FallVerseBotV2.Migrations
                     b.Property<int>("CurrentTurnIndex")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("GameId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -62,16 +59,19 @@ namespace FallVerseBotV2.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.PrimitiveCollection<List<int>>("TurnQueue")
                         .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LastUpdatedAt");
+
                     b.HasIndex("GuildId", "ChannelId", "GameId")
                         .IsUnique();
-
-                    b.HasIndex("LastUpdatedAt");
 
                     b.ToTable("CombatTrackers");
                 });
