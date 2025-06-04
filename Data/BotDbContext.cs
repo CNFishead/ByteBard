@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class BotDbContext : DbContext
 {
@@ -56,6 +59,9 @@ public class BotDbContext : DbContext
         })
         .IsUnique();
 
+    modelBuilder.Entity<CombatTracker>()
+        .HasIndex(t => t.LastUpdatedAt);
+
     // Force all DateTime values to UTC
     foreach (var entity in modelBuilder.Model.GetEntityTypes())
     {
@@ -69,5 +75,28 @@ public class BotDbContext : DbContext
         }
       }
     }
+  }
+
+  private void UpdateTimestamps()
+  {
+    var entries = ChangeTracker.Entries<CombatTracker>()
+      .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+    foreach (var entry in entries)
+    {
+      entry.Entity.LastUpdatedAt = DateTime.UtcNow;
+    }
+  }
+
+  public override int SaveChanges()
+  {
+    UpdateTimestamps();
+    return base.SaveChanges();
+  }
+
+  public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+  {
+    UpdateTimestamps();
+    return base.SaveChangesAsync(cancellationToken);
   }
 }
