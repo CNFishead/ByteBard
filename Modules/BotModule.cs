@@ -44,5 +44,8 @@ public class BotModule : IBaseModule
         services.AddScoped<IGameHandler, CoinFlipHandler>();
         services.AddScoped<IGameHandlerRegistry, GameHandlerRegistry>();
         services.AddScoped<TurnOrderHandler>();
+
+        // Hosted services
+        services.AddHostedService<CombatTrackerCleanupService>();
     }
 }
