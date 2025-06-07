@@ -95,4 +95,4 @@ Removes a combatant by name.
 
 ### Tracker Expiration
 - Each tracker stores a `LastUpdatedAt` timestamp.
-- Trackers are automatically removed by the database if they haven't been updated for **7 days**.
+- A background cleanup service removes trackers that haven't been updated for **7 days**.
