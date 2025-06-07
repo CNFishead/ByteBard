@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FallVerseBotV2.Migrations
 {
     /// <inheritdoc />
-    public partial class CombatTrackerTTL : Migration
+    public partial class LastUpdatedFieldCombat : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,23 +16,17 @@ namespace FallVerseBotV2.Migrations
                 table: "CombatTrackers",
                 type: "timestamp with time zone",
                 nullable: false,
-                defaultValueSql: "CURRENT_TIMESTAMP");
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
 
             migrationBuilder.CreateIndex(
                 name: "IX_CombatTrackers_LastUpdatedAt",
                 table: "CombatTrackers",
                 column: "LastUpdatedAt");
-
-            migrationBuilder.Sql(
-                "CREATE EXTENSION IF NOT EXISTS pg_ttl; SELECT ttl_create_policy('CombatTrackers', 'LastUpdatedAt', INTERVAL '7 days');");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(
-                "SELECT ttl_drop_policy('CombatTrackers', 'LastUpdatedAt');");
-
             migrationBuilder.DropIndex(
                 name: "IX_CombatTrackers_LastUpdatedAt",
                 table: "CombatTrackers");
