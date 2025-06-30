@@ -92,21 +92,19 @@ public class TrackerLifecycleHandler
             return;
         }
 
-        SocketGuildUser? user = null;
+        AllowedMentions? mentions = null;
 
         if (result.MentionUserId.HasValue)
         {
-            user = context.Guild.GetUser(result.MentionUserId.Value);
+            mentions = new AllowedMentions(AllowedMentionTypes.Users)
+            {
+                Users = { result.MentionUserId.Value }
+            };
         }
 
-        string userMention = user?.Mention ?? $"<@{result.MentionUserId}>";
-
         await context.Interaction.FollowupAsync(
-            result.Message.Replace($"<@{result.MentionUserId}>", userMention),
-            allowedMentions: new AllowedMentions
-            {
-                UserIds = result.MentionUserId.HasValue ? new List<ulong> { result.MentionUserId.Value } : new List<ulong>()
-            }
+            result.Message,
+            allowedMentions: mentions
         );
     }
 
