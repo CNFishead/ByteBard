@@ -49,6 +49,16 @@ Sets the active turn to a specific index.
 - Errors if index is out of bounds.
 - Admin/WMs only.
 
+### `/combat tracker-list-queue <gameId>`
+Displays the remaining combatants in the current turn queue.
+
+- Useful for seeing who is left to act this round.
+
+### `/combat tracker-list-order <gameId>`
+Lists all combatants sorted by initiative. This represents the lineup that will form the next turn queue.
+
+- Helpful for checking the full roster after some combatants have been removed.
+
 ---
 
 ### `/combat tracker-reset <gameId>`
