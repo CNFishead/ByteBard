@@ -104,4 +104,66 @@ public class TurnOrderHandler
         await context.Interaction.FollowupAsync($"🔁 Turn order manually updated to index `{turnIndex}`.\n{mention}, your character `{name}` is now up.");
     }
 
+    public async Task ListQueue(SocketInteractionContext context, string gameId)
+    {
+        await context.Interaction.DeferAsync();
+
+        var tracker = await TrackerUtils.TryGetTrackerAsync(_db, context, gameId);
+
+        if (tracker == null || !tracker.IsActive)
+        {
+            await context.Interaction.FollowupAsync($"❌ No active tracker with ID `{gameId}` found in this channel.", ephemeral: true);
+            return;
+        }
+
+        if (tracker.TurnQueue.Count == 0)
+        {
+            await context.Interaction.FollowupAsync("📭 No combatants remain in the queue.", ephemeral: true);
+            return;
+        }
+
+        var lines = tracker.TurnQueue
+            .Select((id, index) =>
+            {
+                var c = tracker.Combatants.FirstOrDefault(cm => cm.Id == id);
+                if (c == null)
+                    return $"{index + 1}. [unknown combatant {id}]";
+                var name = string.IsNullOrWhiteSpace(c.Name) ? "Unknown Combatant" : c.Name;
+                return $"{index + 1}. {name} (initiative {c.Initiative})";
+            });
+
+        var message = "🎯 Remaining combatants:\n" + string.Join("\n", lines);
+        await context.Interaction.FollowupAsync(message);
+    }
+
+    public async Task ListOrder(SocketInteractionContext context, string gameId)
+    {
+        await context.Interaction.DeferAsync();
+
+        var tracker = await TrackerUtils.TryGetTrackerAsync(_db, context, gameId);
+
+        if (tracker == null)
+        {
+            await context.Interaction.FollowupAsync($"❌ No tracker with ID `{gameId}` found in this channel.", ephemeral: true);
+            return;
+        }
+
+        if (tracker.Combatants.Count == 0)
+        {
+            await context.Interaction.FollowupAsync("📭 Tracker has no combatants.", ephemeral: true);
+            return;
+        }
+
+        var lines = tracker.Combatants
+            .OrderByDescending(c => c.Initiative)
+            .Select((c, index) =>
+            {
+                var name = string.IsNullOrWhiteSpace(c.Name) ? "Unknown Combatant" : c.Name;
+                return $"{index + 1}. {name} (initiative {c.Initiative})";
+            });
+
+        var message = "📜 Next round order:\n" + string.Join("\n", lines);
+        await context.Interaction.FollowupAsync(message);
+    }
+
 }
