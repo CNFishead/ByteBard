@@ -51,4 +51,12 @@ public class CombatModule : BaseGroupModule
   [SlashCommand("tracker-setturn", "Set the current turn to a specific index.")]
   public async Task SetTurn(string gameId, int turnIndex)
     => await _turnHandler.SetTurn(Context, gameId, turnIndex);
+
+  [SlashCommand("tracker-list-queue", "List remaining combatants in the queue.")]
+  public async Task ListQueue(string gameId)
+    => await _turnHandler.ListQueue(Context, gameId);
+
+  [SlashCommand("tracker-list-order", "List all combatants for the next round.")]
+  public async Task ListOrder(string gameId)
+    => await _turnHandler.ListOrder(Context, gameId);
 }
