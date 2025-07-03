@@ -35,22 +35,20 @@ public class TurnOrderHandler
             return;
         }
 
-        SocketGuildUser? user = null;
-
+        // Send the turn notification (both public and DM)
         if (result.MentionUserId.HasValue)
         {
-            user = context.Guild.GetUser(result.MentionUserId.Value);
+            var combatant = tracker.Combatants.FirstOrDefault(c => c.DiscordUserId == result.MentionUserId.Value);
+            var characterName = combatant?.Name ?? "Unknown Character";
+
+            await SendTurnNotificationAsync(context, tracker, result.MentionUserId.Value, characterName,
+                result.Message, "It's your turn in the combat tracker");
         }
-
-        string userMention = user?.Mention ?? $"<@{result.MentionUserId}>";
-
-        await context.Interaction.FollowupAsync(
-            result.Message.Replace($"<@{result.MentionUserId}>", userMention),
-            allowedMentions: new AllowedMentions
-            {
-                UserIds = result.MentionUserId.HasValue ? new List<ulong> { result.MentionUserId.Value } : new List<ulong>()
-            }
-        );
+        else
+        {
+            // Fallback for when there's no user to mention
+            await context.Interaction.FollowupAsync(result.Message);
+        }
     }
     public async Task SetTurn(SocketInteractionContext context, string gameId, int turnIndex)
     {
@@ -100,8 +98,19 @@ public class TurnOrderHandler
 
         var mention = $"<@{combatant.DiscordUserId}>";
         var name = string.IsNullOrWhiteSpace(combatant.Name) ? "Unknown Combatant" : combatant.Name;
+        var publicMessage = $"🔁 Turn order manually updated to index `{turnIndex}`.\n{mention}, your character `{name}` is now up.";
 
-        await context.Interaction.FollowupAsync($"🔁 Turn order manually updated to index `{turnIndex}`.\n{mention}, your character `{name}` is now up.");
+        // Send the turn notification (both public and DM)
+        if (combatant.DiscordUserId.HasValue)
+        {
+            await SendTurnNotificationAsync(context, tracker, combatant.DiscordUserId.Value, name,
+                publicMessage, "Your turn has been manually set in the combat tracker");
+        }
+        else
+        {
+            // Fallback for when there's no user to mention
+            await context.Interaction.FollowupAsync(publicMessage);
+        }
     }
 
     public async Task ListQueue(SocketInteractionContext context, string gameId)
@@ -164,6 +173,39 @@ public class TurnOrderHandler
 
         var message = "📜 Next round order:\n" + string.Join("\n", lines);
         await context.Interaction.FollowupAsync(message);
+    }
+
+    private async Task SendTurnNotificationAsync(SocketInteractionContext context, CombatTracker tracker, ulong userId, string characterName, string publicMessage, string dmNotificationReason)
+    {
+        // Send the public message with mention
+        await context.Interaction.FollowupAsync(
+            publicMessage,
+            allowedMentions: new AllowedMentions
+            {
+                UserIds = new List<ulong> { userId }
+            }
+        );
+
+        // Also send a DM to ensure the user gets notified
+        try
+        {
+            var user = context.Client.GetUser(userId);
+            if (user != null)
+            {
+                var dmMessage = $"🎯 **Turn Notification**\n" +
+                              $"{dmNotificationReason} in **{context.Guild.Name}** #{context.Channel.Name}!\n" +
+                              $"Character: **{characterName}**\n" +
+                              $"Round: **{tracker.CurrentRound}**, Turn: **{tracker.CurrentTurnIndex}**";
+
+                await user.SendMessageAsync(dmMessage);
+                _logger.LogInformation($"DM sent to user {user.Username} ({user.Id}) for combat turn notification");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Failed to send DM to user {userId}: {ex.Message}");
+            // DM failed, but don't let it break the main functionality
+        }
     }
 
 }
