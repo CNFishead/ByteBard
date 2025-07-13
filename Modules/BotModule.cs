@@ -47,5 +47,6 @@ public class BotModule : IBaseModule
 
         // Hosted services
         services.AddHostedService<CombatTrackerCleanupService>();
+        services.AddHostedService<SkillCheckCleanupService>();
     }
 }
