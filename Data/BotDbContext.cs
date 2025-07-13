@@ -13,8 +13,11 @@ public class BotDbContext : DbContext
   public DbSet<CurrencyType> CurrencyTypes { get; set; }
   public DbSet<UserCurrencyBalance> CurrencyBalances { get; set; }
   public DbSet<ServerSettings> ServerSettings { get; set; }
-  public DbSet<UserGameStats> UserGameStats { get; set; } = null!; public DbSet<CombatTracker> CombatTrackers { get; set; }
+  public DbSet<UserGameStats> UserGameStats { get; set; } = null!;
+  public DbSet<CombatTracker> CombatTrackers { get; set; }
   public DbSet<Combatant> Combatants { get; set; }
+  public DbSet<SkillCheck> SkillChecks { get; set; }
+  public DbSet<SkillCheckAttempt> SkillCheckAttempts { get; set; }
 
 
 
@@ -49,7 +52,7 @@ public class BotDbContext : DbContext
         .Property(e => e.LastGameData)
         .HasColumnType("jsonb")
         .HasDefaultValueSql("'{}'::jsonb");
-    
+
     modelBuilder.Entity<CombatTracker>()
         .HasIndex(t => new
         {
@@ -75,6 +78,17 @@ public class BotDbContext : DbContext
         }
       }
     }
+
+    // Skill Check configurations
+    modelBuilder.Entity<SkillCheck>()
+        .HasMany(sc => sc.Attempts)
+        .WithOne(sca => sca.SkillCheck)
+        .HasForeignKey(sca => sca.SkillCheckId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    modelBuilder.Entity<SkillCheckAttempt>()
+        .HasIndex(sca => new { sca.SkillCheckId, sca.UserId })
+        .IsUnique(); // Prevent duplicate attempts by same user
   }
 
   private void UpdateTimestamps()
