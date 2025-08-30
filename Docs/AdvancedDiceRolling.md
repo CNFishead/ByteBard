@@ -4,7 +4,7 @@ The Discord bot now supports advanced dice rolling features including PEMDAS mat
 
 ## Getting Help
 
-Use the `/dice-help` command in Discord to display an interactive, comprehensive guide with examples and explanations of all dice rolling features.
+Use the `/help dice` command in Discord to display an interactive, comprehensive guide with examples and explanations of all dice rolling features.
 
 ## Features
 
@@ -74,7 +74,7 @@ All existing features continue to work:
 ## Available Commands
 
 - `/roll [expression]` - Roll dice with the specified expression
-- `/dice-help` - Display comprehensive help with examples and usage guide
+- `/help dice` - Display comprehensive help with examples and usage guide
 
 ## Usage Examples
 
