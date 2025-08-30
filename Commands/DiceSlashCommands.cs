@@ -19,7 +19,7 @@ public class DiceRollModule : InteractionModuleBase<SocketInteractionContext>
         _logger.LogInformation("DiceRollModule constructed");
     }
 
-    [SlashCommand("roll", "Roll dice with advanced features: PEMDAS (3d6x2+1), keep best/worst (4d6b3/4d6w3), advantage/disadvantage")]
+    [SlashCommand("roll", "Roll dice with advanced features")]
     public async Task RollDice(
     [Summary("message", "Dice expressions: 1d20+3 \"attack\" adv; 3d6x2+1; 4d6b3 \"stats\"")] string message)
     {
