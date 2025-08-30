@@ -15,6 +15,9 @@ namespace FallVerseBotV2.Commands.Help
     {
       _loggerFactory = loggerFactory;
       _diceHelpHandler = new DiceHelpHandler(_loggerFactory.CreateLogger<DiceHelpHandler>(), db);
+
+      // Log module construction for debugging
+      logger.LogInformation("HelpModule constructed successfully");
     }
 
     [SlashCommand("dice", "Display comprehensive help for the dice rolling system")]

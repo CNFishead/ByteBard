@@ -43,6 +43,17 @@ public class DiscordBotService
     // Optional: You can load interaction modules from your assembly
     await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
+    // Log discovered modules for debugging
+    _logger.LogInformation($"Loaded {_interactionService.Modules.Count()} interaction modules:");
+    foreach (var module in _interactionService.Modules)
+    {
+      _logger.LogInformation($"  - {module.Name} ({module.SlashCommands.Count()} slash commands)");
+      foreach (var command in module.SlashCommands)
+      {
+        _logger.LogInformation($"    /{command.Name} - {command.Description}");
+      }
+    }
+
     // Connect the Discord client
     var token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
 
