@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Data;
 
 public partial class RandomOrgDiceRoller : IDiceRoller
 {
@@ -52,6 +53,131 @@ public partial class RandomOrgDiceRoller : IDiceRoller
         return (rollList, total, faces, modifier);
     }
 
+    /// <summary>
+    /// Advanced dice rolling with support for PEMDAS operations and best/worst keeping
+    /// Supports expressions like: 3d6x2+1, 4d6b3, 4d6w3, 2d20+5x3-2
+    /// </summary>
+    public (List<int> allRolls, List<int> keptRolls, int total, string expression) RollAdvanced(string diceExpr)
+    {
+        try
+        {
+            _logger.LogInformation($"RollAdvanced: {diceExpr}");
+
+            // Parse the dice expression for keep best/worst modifiers
+            var (cleanExpr, keepBest, keepWorst) = ParseKeepModifiers(diceExpr);
+
+            // Parse basic dice notation
+            var diceMatch = Regex.Match(cleanExpr, @"(\d*)d(\d+)");
+            if (!diceMatch.Success)
+            {
+                _logger.LogWarning("Invalid dice expression format.");
+                return (new List<int>(), new List<int>(), 0, diceExpr);
+            }
+
+            int numDice = string.IsNullOrEmpty(diceMatch.Groups[1].Value) ? 1 : int.Parse(diceMatch.Groups[1].Value);
+            int faces = int.Parse(diceMatch.Groups[2].Value);
+
+            // Roll all dice
+            var allRolls = new List<int>();
+            for (int i = 0; i < numDice; i++)
+            {
+                int rollValue = RollDiceUsingApi(1, 1, faces).Result;
+                allRolls.Add(rollValue);
+            }
+
+            // Apply keep best/worst logic
+            var keptRolls = ApplyKeepLogic(allRolls, keepBest, keepWorst);
+
+            // Replace the dice expression with the sum of kept rolls in the mathematical expression
+            var mathExpression = cleanExpr.Replace(diceMatch.Value, keptRolls.Sum().ToString());
+
+            // Evaluate the mathematical expression using PEMDAS
+            var total = EvaluateMathExpression(mathExpression);
+
+            return (allRolls, keptRolls, total, diceExpr);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in RollAdvanced for expression: {diceExpr}");
+            return (new List<int>(), new List<int>(), 0, diceExpr);
+        }
+    }
+
+    /// <summary>
+    /// Parse keep best/worst modifiers from dice expression
+    /// Examples: 4d6b3 -> keep best 3, 4d6w2 -> keep worst 2
+    /// </summary>
+    private (string cleanExpr, int? keepBest, int? keepWorst) ParseKeepModifiers(string diceExpr)
+    {
+        int? keepBest = null;
+        int? keepWorst = null;
+        string cleanExpr = diceExpr;
+
+        // Match keep best pattern (e.g., "4d6b3")
+        var bestMatch = Regex.Match(diceExpr, @"(\d*d\d+)b(\d+)");
+        if (bestMatch.Success)
+        {
+            keepBest = int.Parse(bestMatch.Groups[2].Value);
+            cleanExpr = diceExpr.Replace(bestMatch.Value, bestMatch.Groups[1].Value);
+        }
+
+        // Match keep worst pattern (e.g., "4d6w3")
+        var worstMatch = Regex.Match(diceExpr, @"(\d*d\d+)w(\d+)");
+        if (worstMatch.Success)
+        {
+            keepWorst = int.Parse(worstMatch.Groups[2].Value);
+            cleanExpr = diceExpr.Replace(worstMatch.Value, worstMatch.Groups[1].Value);
+        }
+
+        return (cleanExpr, keepBest, keepWorst);
+    }
+
+    /// <summary>
+    /// Apply keep best/worst logic to dice rolls
+    /// </summary>
+    private List<int> ApplyKeepLogic(List<int> allRolls, int? keepBest, int? keepWorst)
+    {
+        if (keepBest.HasValue)
+        {
+            return allRolls.OrderByDescending(x => x).Take(keepBest.Value).ToList();
+        }
+        else if (keepWorst.HasValue)
+        {
+            return allRolls.OrderBy(x => x).Take(keepWorst.Value).ToList();
+        }
+        else
+        {
+            return new List<int>(allRolls);
+        }
+    }
+
+    /// <summary>
+    /// Evaluate mathematical expressions with proper PEMDAS order of operations
+    /// Supports: +, -, *, /, x (as multiplication)
+    /// </summary>
+    private int EvaluateMathExpression(string expression)
+    {
+        try
+        {
+            // Replace 'x' with '*' for multiplication
+            expression = expression.Replace("x", "*");
+
+            // Remove any spaces
+            expression = expression.Replace(" ", "");
+
+            // Use DataTable.Compute for PEMDAS evaluation
+            var table = new DataTable();
+            var result = table.Compute(expression, null);
+
+            return Convert.ToInt32(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error evaluating math expression: {expression}");
+            return 0;
+        }
+    }
+
     public async Task<int> RollDiceUsingApi(int num, int min, int max)
     {
         try
@@ -93,7 +219,15 @@ public partial class RandomOrgDiceRoller : IDiceRoller
             var result = JsonSerializer.Deserialize<RandomOrgResponse>(responseJson, options);
             // _logger.LogInformation($"Random.org Response: {result.Result.Random.Data[0]}");
             // Return the first number in the result
-            return result.Result.Random.Data[0];
+            if (result?.Result?.Random?.Data?.Count > 0)
+            {
+                return result.Result.Random.Data[0];
+            }
+            else
+            {
+                _logger.LogWarning("Invalid response from Random.org. Falling back to simulated roll.");
+                return SimulatedDiceRoll(min, max);
+            }
         }
         catch (Exception e)
         {
