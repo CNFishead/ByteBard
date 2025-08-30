@@ -1,3 +1,47 @@
+## 📚 Help Commands
+
+Centralized help system providing information about bot features and commands.
+
+---
+
+### `/help dice`
+
+- **Description**: Display comprehensive help with interactive examples and explanations of all dice rolling features.
+- **Parameters**: None
+- **Features Covered**:
+  - Basic dice rolling
+  - Advantage/Disadvantage mechanics
+  - PEMDAS mathematical operations
+  - Keep best/worst functionality
+  - Combined features and real-world examples
+- **Example**: `/help dice`
+
+---
+
+### `/help commands`
+
+- **Description**: Display a list of all available bot commands (Coming Soon)
+- **Parameters**: None
+- **Example**: `/help commands`
+
+---
+
+### `/help economy`
+
+- **Description**: Display help for economy and currency commands (Coming Soon)
+- **Parameters**: None
+- **Example**: `/help economy`
+
+---
+
+### `/help admin`
+
+- **Description**: Display help for administrative commands (Coming Soon)
+- **Parameters**: None
+- **Example**: `/help admin`
+
+---
+
 ## 🎲 Dice Commands
 
 These commands provide advanced dice rolling capabilities with support for mathematical operations, advantage/disadvantage, and keep best/worst functionality.
@@ -21,14 +65,14 @@ These commands provide advanced dice rolling capabilities with support for mathe
   - `/roll 4d6b3` - Roll stats (keep best 3 of 4)
   - `/roll 3d6x2+1 "enhanced damage"` - Complex math with label
   - `/roll 1d20+3 "attack"; 2d6+2 "damage"` - Multiple rolls
+- **Help**: Use `/help dice` for comprehensive usage guide
 
 ---
 
-### `/dice-help`
+### `/dice-help` → **DEPRECATED**
 
-- **Description**: Display comprehensive help with interactive examples and explanations of all dice rolling features.
-- **Parameters**: None
-- **Example**: `/dice-help`
+- **⚠️ Deprecated**: This command has been moved to `/help dice`
+- **Use Instead**: `/help dice` - Centralized help system
 
 ---
 
