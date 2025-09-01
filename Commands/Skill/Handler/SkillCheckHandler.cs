@@ -119,7 +119,7 @@ public class SkillCheckHandler
       }
       else
       {
-        // For public skill checks, send result to channel but don't reveal DC or messages
+        // For public skill checks, send full result to channel including success/failure messages
         var embed = new EmbedBuilder()
             .WithTitle($"🎲 {skillName} Skill Check Result")
             .WithDescription($"**Roll:** {rollResult}")
@@ -130,35 +130,27 @@ public class SkillCheckHandler
         {
           embed.WithColor(Color.Green)
                .AddField("Result", "✅ **SUCCESS!**", false);
+
+          // Add success message to public embed if available
+          if (!string.IsNullOrWhiteSpace(skillCheck.SuccessMessage))
+          {
+            embed.AddField("Success", skillCheck.SuccessMessage, false);
+          }
         }
         else
         {
           embed.WithColor(Color.Red)
                .AddField("Result", "❌ **FAILURE**", false);
+
+          // Add failure message to public embed if available
+          if (!string.IsNullOrWhiteSpace(skillCheck.FailureMessage))
+          {
+            embed.AddField("Failure", skillCheck.FailureMessage, false);
+          }
         }
 
-        // Send the result (publicly visible so others can see outcomes)
+        // Send the result publicly (no DM needed for public skill checks)
         await context.Interaction.FollowupAsync(embed: embed.Build());
-
-        // Send detailed success/failure message privately if available
-        if (!string.IsNullOrWhiteSpace(success ? skillCheck.SuccessMessage : skillCheck.FailureMessage))
-        {
-          try
-          {
-            var dmEmbed = new EmbedBuilder()
-                .WithTitle($"🎲 {skillName} Skill Check - {(success ? "SUCCESS" : "FAILURE")}")
-                .WithDescription(success ? skillCheck.SuccessMessage : skillCheck.FailureMessage)
-                .WithColor(success ? Color.Green : Color.Red)
-                .WithTimestamp(DateTimeOffset.UtcNow);
-
-            await context.User.SendMessageAsync(embed: dmEmbed.Build());
-          }
-          catch (Exception dmEx)
-          {
-            _logger.LogWarning(dmEx, $"Could not send DM to user {userId} for skill check details");
-            // Don't fail the whole operation if DM fails
-          }
-        }
       }
 
       _logger.LogInformation($"User {userId} rolled {rollResult} for {skillName} skill check (DC {skillCheck.DC}) - {(success ? "SUCCESS" : "FAILURE")}");
